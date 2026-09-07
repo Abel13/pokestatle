@@ -48,7 +48,7 @@ SQL migrations for Postgres live in `supabase/migrations/`.
 - Attribute feedback: `EXACT` / `VERY_CLOSE` (≤10%) / `CLOSE` (≤25%) / `FAR`, plus up/down
 - Types: match / no match per type on the guess
 - Future dates are not accessible
-- Share text is ASCII (e.g. `E=`, `~^`, `-v`) — no emoji squares
+- Share text uses emoji squares (🟩🟨🟧⬛) plus direction arrows — without revealing the Pokémon name
 
 ## Scripts
 

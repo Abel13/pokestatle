@@ -87,7 +87,7 @@ export function ResultModal({
           </motion.div>
         ) : null}
 
-        <pre className="max-h-40 overflow-auto rounded-lg bg-muted/60 p-3 font-mono text-xs leading-relaxed whitespace-pre-wrap">
+        <pre className="max-h-48 overflow-auto rounded-lg bg-muted/60 p-3 font-mono text-sm leading-relaxed whitespace-pre-wrap">
           {share}
         </pre>
 
