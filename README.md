@@ -21,7 +21,7 @@ pnpm dev
 
 App: [http://127.0.0.1:43127](http://127.0.0.1:43127)
 
-`pnpm sync:pokemon` pulls species from PokéAPI, keeps standard forms (Gens I–IX), and upserts into `data/pokestatle.db`. The daily challenge never calls PokéAPI during play.
+`pnpm sync:pokemon` pulls species from PokéAPI, keeps standard forms (Gens I–IX), and upserts into `data/pokestatle.db`. A committed seed file `data/pokestatle.seed.db` is used on Vercel (copied into `/tmp` because the serverless filesystem is read-only). The daily challenge never calls PokéAPI during play.
 
 ## Environment
 

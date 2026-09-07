@@ -4,8 +4,35 @@ import fs from "fs";
 import path from "path";
 import * as schema from "./schema";
 
-const DATA_DIR = path.join(process.cwd(), "data");
+const isServerless = Boolean(
+  process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME,
+);
+
+/** Writable dir: /tmp on Vercel (read-only /var/task), local ./data otherwise. */
+const DATA_DIR = isServerless
+  ? path.join("/tmp", "pokestatle")
+  : path.join(process.cwd(), "data");
+
 const DB_PATH = path.join(DATA_DIR, "pokestatle.db");
+const SEED_PATH = path.join(process.cwd(), "data", "pokestatle.seed.db");
+
+function ensureDataDir() {
+  if (!fs.existsSync(DATA_DIR)) {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+  }
+}
+
+function ensureSeededDatabase() {
+  ensureDataDir();
+  if (fs.existsSync(DB_PATH)) return;
+
+  if (fs.existsSync(SEED_PATH)) {
+    fs.copyFileSync(SEED_PATH, DB_PATH);
+    return;
+  }
+
+  // Empty DB — schema will be applied; sync:pokemon still needed for local empty installs.
+}
 
 function ensureSchema(sqlite: Database.Database) {
   sqlite.exec(`
@@ -75,11 +102,10 @@ let cached: ReturnType<typeof drizzle<typeof schema>> | null = null;
 
 export function getDb() {
   if (cached) return cached;
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
-  }
+  ensureSeededDatabase();
   const sqlite = new Database(DB_PATH);
-  sqlite.pragma("journal_mode = WAL");
+  // DELETE is safer than WAL on ephemeral /tmp (serverless).
+  sqlite.pragma(isServerless ? "journal_mode = DELETE" : "journal_mode = WAL");
   sqlite.pragma("foreign_keys = ON");
   ensureSchema(sqlite);
   cached = drizzle(sqlite, { schema });
