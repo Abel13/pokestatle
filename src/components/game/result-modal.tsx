@@ -90,6 +90,10 @@ export function ResultModal({
         <pre className="max-h-48 overflow-auto rounded-lg bg-muted/60 p-3 font-mono text-sm leading-relaxed whitespace-pre-wrap">
           {share}
         </pre>
+        <p className="text-xs text-muted-foreground">
+          Each attribute: proximity then direction — 🟩 exact · 🟨 ≤10% · 🟧 ≤25% ·
+          ⬛ far · ⬆️ higher · ⬇️ lower · ➖ exact
+        </p>
 
         <Button type="button" className="w-full" onClick={copy}>
           {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
