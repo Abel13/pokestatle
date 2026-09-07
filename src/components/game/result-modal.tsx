@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { Check, Copy, PartyPopper, X } from "lucide-react";
+import { Check, Copy, PartyPopper, Share2, X } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -34,10 +34,30 @@ export function ResultModal({
   const [copied, setCopied] = useState(false);
   const share = formatShareText(challengeId, results, won, MAX_GUESSES);
 
-  async function copy() {
+  async function copyToClipboard() {
     await navigator.clipboard.writeText(share);
     setCopied(true);
     setTimeout(() => setCopied(false), 1600);
+  }
+
+  async function onShare() {
+    const isMobile =
+      typeof window !== "undefined" &&
+      window.matchMedia("(max-width: 639px)").matches;
+
+    if (isMobile && typeof navigator.share === "function") {
+      try {
+        await navigator.share({
+          title: `PokéStatle #${challengeId}`,
+          text: share,
+        });
+        return;
+      } catch (err) {
+        if (err instanceof DOMException && err.name === "AbortError") return;
+      }
+    }
+
+    await copyToClipboard();
   }
 
   return (
@@ -95,9 +115,23 @@ export function ResultModal({
           ⬛ far · ⬆️ higher · ⬇️ lower · ✅ exact · types use ➖ (no direction)
         </p>
 
-        <Button type="button" className="w-full" onClick={copy}>
-          {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
-          {copied ? "Copied" : "Copy Result"}
+        <Button type="button" className="w-full" onClick={onShare}>
+          {copied ? (
+            <Check className="size-4" />
+          ) : (
+            <>
+              <Share2 className="size-4 sm:hidden" />
+              <Copy className="hidden size-4 sm:block" />
+            </>
+          )}
+          {copied ? (
+            <span>Copied</span>
+          ) : (
+            <>
+              <span className="sm:hidden">Share</span>
+              <span className="hidden sm:inline">Copy Result</span>
+            </>
+          )}
         </Button>
       </DialogContent>
     </Dialog>
