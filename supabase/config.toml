@@ -1,0 +1,42 @@
+# A string used to distinguish different Supabase projects on the same host. Defaults to the working
+# directory name when running `supabase init`.
+project_id = "pokestatle"
+
+[api]
+enabled = true
+# Non-default port (avoid 54321 conflicts with other local projects)
+port = 54331
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+# Non-default port (avoid 54322)
+port = 54332
+shadow_port = 54336
+major_version = 15
+
+[studio]
+enabled = true
+port = 54333
+api_url = "http://127.0.0.1"
+
+[inbucket]
+enabled = true
+port = 54334
+
+[analytics]
+enabled = false
+port = 54335
+
+[auth]
+enabled = true
+site_url = "http://127.0.0.1:43127"
+additional_redirect_urls = ["http://127.0.0.1:43127/api/auth/callback"]
+enable_signup = true
+
+[auth.external.google]
+enabled = true
+client_id = "env(GOOGLE_CLIENT_ID)"
+secret = "env(GOOGLE_CLIENT_SECRET)"
+redirect_uri = "http://127.0.0.1:54331/auth/v1/callback"
