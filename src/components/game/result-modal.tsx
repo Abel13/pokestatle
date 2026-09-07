@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { Check, Copy, PartyPopper, Share2, X } from "lucide-react";
+import { Check, Copy, Frown, PartyPopper, Share2 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -64,12 +64,12 @@ export function ResultModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         className={
-          "fixed inset-0 top-0 left-0 z-50 flex h-dvh max-h-dvh w-full max-w-none translate-x-0 translate-y-0 flex-col gap-4 overflow-y-auto rounded-none p-5 " +
-          "sm:inset-auto sm:top-1/2 sm:left-1/2 sm:h-auto sm:max-h-[90vh] sm:w-full sm:max-w-md sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-xl sm:p-4"
+          "fixed inset-0 top-0 left-0 z-50 flex h-dvh max-h-dvh w-full max-w-none translate-x-0 translate-y-0 flex-col items-center gap-4 overflow-y-auto rounded-none p-5 text-center " +
+          "sm:inset-auto sm:top-1/2 sm:left-1/2 sm:h-auto sm:max-h-[90vh] sm:w-full sm:max-w-md sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-xl sm:p-6"
         }
       >
-        <DialogHeader className="pr-8">
-          <DialogTitle className="flex items-center gap-2 text-xl">
+        <DialogHeader className="w-full items-center pr-8 text-center sm:pr-0">
+          <DialogTitle className="flex items-center justify-center gap-2 text-xl">
             {won ? (
               <>
                 <PartyPopper className="size-5 text-teal-600 dark:text-teal-300" />
@@ -77,12 +77,12 @@ export function ResultModal({
               </>
             ) : (
               <>
-                <X className="size-5" />
+                <Frown className="size-5 text-muted-foreground" />
                 Out of guesses
               </>
             )}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-center">
             {won
               ? `Solved in ${results.length}/${MAX_GUESSES}.`
               : "Better luck tomorrow — same Pokémon for everyone."}
@@ -112,15 +112,20 @@ export function ResultModal({
           </motion.div>
         ) : null}
 
-        <pre className="min-h-0 flex-1 overflow-auto rounded-lg bg-muted/60 p-3 font-mono text-sm leading-relaxed whitespace-pre-wrap sm:max-h-48 sm:flex-none">
+        <pre className="w-full min-h-0 flex-1 overflow-auto rounded-lg bg-muted/60 p-3 text-left font-mono text-sm leading-relaxed whitespace-pre-wrap sm:max-h-48 sm:flex-none">
           {share}
         </pre>
-        <p className="text-xs text-muted-foreground">
+        <p className="w-full text-xs text-muted-foreground">
           Each attribute: proximity then direction — 🟩 exact · 🟨 ≤10% · 🟧 ≤25% ·
           ⬛ far · ⬆️ higher · ⬇️ lower · ✅ exact · types use ➖ (no direction)
         </p>
 
-        <Button type="button" className="mt-auto w-full sm:mt-0" onClick={onShare}>
+        <Button
+          type="button"
+          size="lg"
+          className="mt-auto w-full sm:mt-0"
+          onClick={onShare}
+        >
           {copied ? (
             <Check className="size-4" />
           ) : (

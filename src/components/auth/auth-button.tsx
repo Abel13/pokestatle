@@ -67,7 +67,7 @@ export function AuthButton() {
 
   if (!configured) {
     return (
-      <Button type="button" variant="ghost" size="sm" disabled title="Configure Supabase to enable Google Auth">
+      <Button type="button" variant="ghost" size="default" disabled title="Configure Supabase to enable Google Auth">
         <User className="size-4" />
         Guest
       </Button>
@@ -76,7 +76,7 @@ export function AuthButton() {
 
   if (user) {
     return (
-      <Button type="button" variant="ghost" size="sm" onClick={signOut}>
+      <Button type="button" variant="ghost" size="default" onClick={signOut}>
         <LogOut className="size-4" />
         Sign out
       </Button>
@@ -84,7 +84,7 @@ export function AuthButton() {
   }
 
   return (
-    <Button type="button" variant="outline" size="sm" onClick={signIn}>
+    <Button type="button" variant="outline" size="default" onClick={signIn}>
       <LogIn className="size-4" />
       Google
     </Button>
