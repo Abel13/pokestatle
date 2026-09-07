@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { AlertCircle, LoaderCircle } from "lucide-react";
-import { GuessTable } from "@/components/game/guess-table";
+import { GuessCards } from "@/components/game/guess-cards";
 import { PokemonSearch } from "@/components/game/pokemon-search";
 import { ResultModal } from "@/components/game/result-modal";
 import { Badge } from "@/components/ui/badge";
@@ -167,28 +167,28 @@ export function GameBoard() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-5 sm:space-y-7">
       <motion.section
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.45, ease: "easeOut" }}
-        className="relative overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-br from-teal-500/10 via-background to-sky-500/10 px-6 py-10 text-center shadow-sm"
+        className="relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-teal-500/10 via-background to-sky-500/10 px-4 py-6 text-center shadow-sm sm:rounded-3xl sm:px-6 sm:py-8"
       >
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(20,184,166,0.18),transparent_55%)]" />
-        <div className="relative space-y-3">
-          <p className="font-heading text-4xl font-semibold tracking-tight sm:text-5xl">
+        <div className="relative space-y-2 sm:space-y-3">
+          <p className="font-heading text-3xl font-semibold tracking-tight sm:text-5xl">
             PokéStatle
             {challenge ? (
-              <span className="ml-2 text-teal-700 dark:text-teal-300">
+              <span className="ml-1.5 text-teal-700 sm:ml-2 dark:text-teal-300">
                 #{challenge.id}
               </span>
             ) : null}
           </p>
-          <p className="mx-auto max-w-md text-sm text-muted-foreground sm:text-base">
+          <p className="mx-auto max-w-md text-xs text-muted-foreground sm:text-base">
             Discover today&apos;s Pokémon in {MAX_GUESSES} guesses. Everyone gets
             the same challenge.
           </p>
-          <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
+          <div className="flex flex-wrap items-center justify-center gap-1.5 pt-0.5 sm:gap-2 sm:pt-1">
             {challenge ? (
               <>
                 <Badge variant="secondary">{challenge.date}</Badge>
@@ -222,7 +222,7 @@ export function GameBoard() {
         ) : null}
       </div>
 
-      <GuessTable results={state?.results ?? []} />
+      <GuessCards results={state?.results ?? []} />
 
       {state && challenge ? (
         <ResultModal
