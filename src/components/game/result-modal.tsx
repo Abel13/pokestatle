@@ -62,8 +62,13 @@ export function ResultModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="overflow-hidden sm:max-w-md">
-        <DialogHeader>
+      <DialogContent
+        className={
+          "fixed inset-0 top-0 left-0 z-50 flex h-dvh max-h-dvh w-full max-w-none translate-x-0 translate-y-0 flex-col gap-4 overflow-y-auto rounded-none p-5 " +
+          "sm:inset-auto sm:top-1/2 sm:left-1/2 sm:h-auto sm:max-h-[90vh] sm:w-full sm:max-w-md sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-xl sm:p-4"
+        }
+      >
+        <DialogHeader className="pr-8">
           <DialogTitle className="flex items-center gap-2 text-xl">
             {won ? (
               <>
@@ -89,7 +94,7 @@ export function ResultModal({
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ type: "spring", stiffness: 260, damping: 18 }}
-            className="flex flex-col items-center gap-2 py-2"
+            className="flex flex-col items-center gap-2 py-4 sm:py-2"
           >
             {revealed.sprite ? (
               <Image
@@ -97,7 +102,7 @@ export function ResultModal({
                 alt={revealed.name}
                 width={160}
                 height={160}
-                className="size-36 object-contain"
+                className="size-40 object-contain sm:size-36"
                 unoptimized
               />
             ) : null}
@@ -107,7 +112,7 @@ export function ResultModal({
           </motion.div>
         ) : null}
 
-        <pre className="max-h-48 overflow-auto rounded-lg bg-muted/60 p-3 font-mono text-sm leading-relaxed whitespace-pre-wrap">
+        <pre className="min-h-0 flex-1 overflow-auto rounded-lg bg-muted/60 p-3 font-mono text-sm leading-relaxed whitespace-pre-wrap sm:max-h-48 sm:flex-none">
           {share}
         </pre>
         <p className="text-xs text-muted-foreground">
@@ -115,7 +120,7 @@ export function ResultModal({
           ⬛ far · ⬆️ higher · ⬇️ lower · ✅ exact · types use ➖ (no direction)
         </p>
 
-        <Button type="button" className="w-full" onClick={onShare}>
+        <Button type="button" className="mt-auto w-full sm:mt-0" onClick={onShare}>
           {copied ? (
             <Check className="size-4" />
           ) : (
