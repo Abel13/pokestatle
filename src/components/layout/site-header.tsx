@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { BarChart3, History, Trophy } from "lucide-react";
 import { useEffect, useState } from "react";
 import { AuthButton } from "@/components/auth/auth-button";
+import { LogoMark } from "@/components/brand/logo-mark";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { cn } from "@/lib/utils";
 
@@ -23,7 +24,12 @@ export function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-md">
       <div className="mx-auto flex h-14 max-w-5xl items-center justify-between gap-3 px-4">
-        <Link href="/" className="group flex items-baseline gap-2">
+        <Link
+          href="/"
+          className="group flex items-center gap-2"
+          aria-label="PokéStatle home"
+        >
+          <LogoMark className="size-8 transition-transform group-hover:scale-105" />
           <span className="font-heading text-lg font-semibold tracking-tight text-foreground transition-colors group-hover:text-teal-600 dark:group-hover:text-teal-300">
             PokéStatle
           </span>
@@ -65,7 +71,10 @@ export function SiteHeader() {
               )}
             >
               {link.href === "/" || !Icon ? (
-                <span className="text-sm font-semibold">Play</span>
+                <>
+                  <LogoMark className="size-4" />
+                  <span>Play</span>
+                </>
               ) : (
                 <>
                   <Icon className="size-4" />

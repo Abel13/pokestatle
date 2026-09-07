@@ -15,6 +15,17 @@ export const metadata: Metadata = {
   title: "PokéStatle — Daily Pokémon Guessing",
   description:
     "Guess the daily Pokémon using type, generation, height, weight, and base stats feedback.",
+  applicationName: "PokéStatle",
+  icons: {
+    icon: [{ url: "/icon.png", type: "image/png" }],
+    apple: [{ url: "/apple-icon.png", type: "image/png" }],
+  },
+  openGraph: {
+    title: "PokéStatle — Daily Pokémon Guessing",
+    description:
+      "Guess the daily Pokémon using type, generation, height, weight, and base stats feedback.",
+    images: [{ url: "/logo.png", width: 512, height: 512, alt: "PokéStatle" }],
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

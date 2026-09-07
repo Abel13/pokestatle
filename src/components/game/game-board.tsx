@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { AlertCircle, LoaderCircle } from "lucide-react";
+import { LogoMark } from "@/components/brand/logo-mark";
 import { GuessCards } from "@/components/game/guess-cards";
 import { PokemonSearch } from "@/components/game/pokemon-search";
 import { ResultModal } from "@/components/game/result-modal";
@@ -176,6 +177,9 @@ export function GameBoard() {
       >
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(20,184,166,0.18),transparent_55%)]" />
         <div className="relative space-y-2 sm:space-y-3">
+          <div className="flex justify-center">
+            <LogoMark className="size-12 sm:size-14" />
+          </div>
           <p className="font-heading text-3xl font-semibold tracking-tight sm:text-5xl">
             PokéStatle
             {challenge ? (
