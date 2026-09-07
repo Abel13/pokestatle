@@ -84,7 +84,7 @@ export function PokemonSearch({
           value={query}
           disabled={disabled}
           placeholder="Search a Pokémon..."
-          className="h-11 rounded-xl border-border/80 bg-background/80 pl-10 pr-10 text-sm shadow-sm transition focus-visible:ring-teal-500/40 sm:h-12 sm:text-base"
+          className="h-11 rounded-xl border-border/80 bg-background/80 pl-10 pr-10 text-base shadow-sm transition focus-visible:ring-teal-500/40 sm:h-12"
           role="combobox"
           aria-expanded={open}
           aria-controls={listId}
