@@ -14,11 +14,11 @@ function proximityEmoji(status: MatchStatus): string {
   }
 }
 
-/** Second emoji in every slot: direction (➖ when exact / N/A). */
+/** Second emoji in every slot: direction (✅ when exact / N/A). */
 function directionEmoji(direction: AttributeResult["direction"]): string {
   if (direction === "UP") return "⬆️";
   if (direction === "DOWN") return "⬇️";
-  return "➖";
+  return "✅";
 }
 
 /** Always: [proximity][direction] */
