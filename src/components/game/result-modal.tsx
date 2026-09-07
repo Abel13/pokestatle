@@ -92,7 +92,7 @@ export function ResultModal({
         </pre>
         <p className="text-xs text-muted-foreground">
           Each attribute: proximity then direction — 🟩 exact · 🟨 ≤10% · 🟧 ≤25% ·
-          ⬛ far · ⬆️ higher · ⬇️ lower · ✅ exact
+          ⬛ far · ⬆️ higher · ⬇️ lower · ✅ exact · types use ➖ (no direction)
         </p>
 
         <Button type="button" className="w-full" onClick={copy}>

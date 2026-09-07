@@ -33,7 +33,8 @@ function typesSlot(types: GuessResult["attributes"]["types"]): string {
   let proximity: MatchStatus = "FAR";
   if (types.length > 0 && types.every((t) => t.match)) proximity = "EXACT";
   else if (types.some((t) => t.match)) proximity = "VERY_CLOSE";
-  return slotEmoji(proximity, null);
+  // Types have no direction — always "-" as the second glyph.
+  return `${proximityEmoji(proximity)}➖`;
 }
 
 /**
