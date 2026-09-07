@@ -64,85 +64,91 @@ export function ResultModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         className={
-          "fixed inset-0 top-0 left-0 z-50 flex h-dvh max-h-dvh w-full max-w-none translate-x-0 translate-y-0 flex-col items-center gap-4 overflow-y-auto rounded-none p-5 text-center " +
-          "sm:inset-auto sm:top-1/2 sm:left-1/2 sm:h-auto sm:max-h-[90vh] sm:w-full sm:max-w-md sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-xl sm:p-6"
+          "!fixed !inset-0 !top-0 !left-0 z-50 flex !h-dvh !max-h-dvh !w-screen !max-w-none !translate-x-0 !translate-y-0 flex-col gap-0 overflow-hidden !rounded-none border-0 p-0 text-center " +
+          "sm:!inset-auto sm:!top-1/2 sm:!left-1/2 sm:!h-auto sm:!max-h-[90vh] sm:!w-full sm:!max-w-md sm:!-translate-x-1/2 sm:!-translate-y-1/2 sm:!rounded-xl sm:border"
         }
       >
-        <DialogHeader className="w-full items-center pr-8 text-center sm:pr-0">
-          <DialogTitle className="flex items-center justify-center gap-2 text-xl">
-            {won ? (
-              <>
-                <PartyPopper className="size-5 text-teal-600 dark:text-teal-300" />
-                You caught it
-              </>
+        <div className="flex min-h-0 flex-1 flex-col px-4 pt-5 pb-4 sm:px-6 sm:pt-6 sm:pb-5">
+          <DialogHeader className="shrink-0 items-center gap-1 pr-8 text-center sm:pr-0">
+            <DialogTitle className="flex items-center justify-center gap-2 text-lg sm:text-xl">
+              {won ? (
+                <>
+                  <PartyPopper className="size-5 text-teal-600 dark:text-teal-300" />
+                  You caught it
+                </>
+              ) : (
+                <>
+                  <Frown className="size-5 text-muted-foreground" />
+                  Out of guesses
+                </>
+              )}
+            </DialogTitle>
+            <DialogDescription className="text-center text-xs sm:text-sm">
+              {won
+                ? `Solved in ${results.length}/${MAX_GUESSES}.`
+                : "Better luck tomorrow — same Pokémon for everyone."}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 py-3">
+            {revealed ? (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.92 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ type: "spring", stiffness: 280, damping: 20 }}
+                className="flex shrink-0 flex-col items-center gap-1"
+              >
+                {revealed.sprite ? (
+                  <Image
+                    src={revealed.sprite}
+                    alt={revealed.name}
+                    width={128}
+                    height={128}
+                    className="size-28 object-contain sm:size-32"
+                    unoptimized
+                  />
+                ) : null}
+                <p className="font-heading text-xl font-semibold tracking-tight sm:text-2xl">
+                  {revealed.name}
+                </p>
+              </motion.div>
+            ) : null}
+
+            <pre className="w-fit max-w-full overflow-x-auto rounded-xl bg-muted/70 px-4 py-3 text-center font-mono text-[13px] leading-5 whitespace-pre sm:text-sm sm:leading-6">
+              {share}
+            </pre>
+
+            <p className="max-w-[20rem] text-[11px] leading-snug text-muted-foreground sm:max-w-none sm:text-xs">
+              🟩 exact · 🟨 ≤10% · 🟧 ≤25% · ⬛ far
+              <br />
+              ⬆️ higher · ⬇️ lower · ✅ exact · types ➖
+            </p>
+          </div>
+
+          <Button
+            type="button"
+            size="lg"
+            className="h-12 w-full shrink-0 sm:h-10"
+            onClick={onShare}
+          >
+            {copied ? (
+              <Check className="size-4" />
             ) : (
               <>
-                <Frown className="size-5 text-muted-foreground" />
-                Out of guesses
+                <Share2 className="size-4 sm:hidden" />
+                <Copy className="hidden size-4 sm:block" />
               </>
             )}
-          </DialogTitle>
-          <DialogDescription className="text-center">
-            {won
-              ? `Solved in ${results.length}/${MAX_GUESSES}.`
-              : "Better luck tomorrow — same Pokémon for everyone."}
-          </DialogDescription>
-        </DialogHeader>
-
-        {revealed ? (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ type: "spring", stiffness: 260, damping: 18 }}
-            className="flex flex-col items-center gap-2 py-4 sm:py-2"
-          >
-            {revealed.sprite ? (
-              <Image
-                src={revealed.sprite}
-                alt={revealed.name}
-                width={160}
-                height={160}
-                className="size-40 object-contain sm:size-36"
-                unoptimized
-              />
-            ) : null}
-            <p className="font-heading text-2xl font-semibold tracking-tight">
-              {revealed.name}
-            </p>
-          </motion.div>
-        ) : null}
-
-        <pre className="w-full min-h-0 flex-1 overflow-auto rounded-lg bg-muted/60 p-3 text-left font-mono text-sm leading-relaxed whitespace-pre-wrap sm:max-h-48 sm:flex-none">
-          {share}
-        </pre>
-        <p className="w-full text-xs text-muted-foreground">
-          Each attribute: proximity then direction — 🟩 exact · 🟨 ≤10% · 🟧 ≤25% ·
-          ⬛ far · ⬆️ higher · ⬇️ lower · ✅ exact · types use ➖ (no direction)
-        </p>
-
-        <Button
-          type="button"
-          size="lg"
-          className="mt-auto w-full sm:mt-0"
-          onClick={onShare}
-        >
-          {copied ? (
-            <Check className="size-4" />
-          ) : (
-            <>
-              <Share2 className="size-4 sm:hidden" />
-              <Copy className="hidden size-4 sm:block" />
-            </>
-          )}
-          {copied ? (
-            <span>Copied</span>
-          ) : (
-            <>
-              <span className="sm:hidden">Share</span>
-              <span className="hidden sm:inline">Copy Result</span>
-            </>
-          )}
-        </Button>
+            {copied ? (
+              <span>Copied</span>
+            ) : (
+              <>
+                <span className="sm:hidden">Share</span>
+                <span className="hidden sm:inline">Copy Result</span>
+              </>
+            )}
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   );
