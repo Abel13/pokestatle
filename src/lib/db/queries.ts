@@ -57,19 +57,21 @@ export function searchPokemon(query: string, limit = 12) {
   const q = query.trim().toLowerCase();
   if (!q) return [];
   const db = getDb();
-  const rows = db.select().from(schema.pokemon).all();
-  return rows
-    .filter(
-      (p) =>
-        p.name.toLowerCase().includes(q) || p.slug.toLowerCase().includes(q),
+  const pattern = `%${q}%`;
+  const rows = db
+    .select()
+    .from(schema.pokemon)
+    .where(
+      sql`lower(${schema.pokemon.name}) like ${pattern} or lower(${schema.pokemon.slug}) like ${pattern}`,
     )
-    .slice(0, limit)
-    .map((p) => ({
-      id: p.id,
-      name: p.name,
-      sprite: p.sprite,
-      types: JSON.parse(p.typesJson) as string[],
-    }));
+    .limit(limit)
+    .all();
+  return rows.map((p) => ({
+    id: p.id,
+    name: p.name,
+    sprite: p.sprite,
+    types: JSON.parse(p.typesJson) as string[],
+  }));
 }
 
 export function getOrCreateTodayChallenge(date = getChallengeDate()) {
