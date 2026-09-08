@@ -66,7 +66,7 @@ export default function ArchivePage() {
 
             // Mark played challenges
             days.forEach((day) => {
-              const game = gamesMap.get(day.date);
+              const game: GameFromAPI | undefined = gamesMap.get(day.date);
               if (game) {
                 day.played = true;
                 day.status = game.status as "WON" | "LOST";
