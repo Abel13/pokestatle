@@ -8,7 +8,7 @@ import { getChallengeDate } from "@/lib/game/daily";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const supabase = await createClient();
     if (!supabase) {
@@ -23,7 +23,10 @@ export async function GET() {
       return NextResponse.json({ game: null });
     }
 
-    const date = getChallengeDate();
+    // Get date from query parameter or use today
+    const { searchParams } = new URL(request.url);
+    const dateParam = searchParams.get("date");
+    const date = dateParam || getChallengeDate();
     const challenge = await getOrCreateTodayChallenge(date);
 
     if (usePostgres()) {
