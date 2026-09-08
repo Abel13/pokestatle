@@ -7,6 +7,7 @@ import {
   usePostgres,
 } from "@/lib/db";
 import type { GuessResult } from "@/lib/game/types";
+import { MAX_GUESSES } from "@/lib/game/types";
 import { calculateResultScore } from "@/lib/game/score";
 
 function parseJsonArray<T>(value: unknown): T[] {
@@ -124,7 +125,7 @@ export async function persistGuessForUser(input: {
     } = { score: null, grade: null, efficiency: null, accuracy: null };
 
     if (status !== "PLAYING") {
-      const resultScore = calculateResultScore(results, input.won, 6);
+      const resultScore = calculateResultScore(results, input.won, MAX_GUESSES);
       scoreData = {
         score: resultScore.score,
         grade: resultScore.grade,
@@ -209,7 +210,7 @@ export async function persistGuessForUser(input: {
   } = { score: null, grade: null, efficiency: null, accuracy: null };
 
   if (status !== "PLAYING") {
-    const resultScore = calculateResultScore(results, input.won, 6);
+    const resultScore = calculateResultScore(results, input.won, MAX_GUESSES);
     scoreData = {
       score: resultScore.score,
       grade: resultScore.grade,
