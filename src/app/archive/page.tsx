@@ -20,6 +20,17 @@ type ChallengeDay = {
   grade?: string;
 };
 
+type GameFromAPI = {
+  challengeId: number;
+  date: string;
+  status: string;
+  guesses: number[];
+  results: GuessResult[];
+  completedAt: string | null;
+  score: number | null;
+  grade: string | null;
+};
+
 export default function ArchivePage() {
   const [challenges, setChallenges] = useState<ChallengeDay[]>([]);
   const [loading, setLoading] = useState(true);

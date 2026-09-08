@@ -20,10 +20,10 @@ const bodySchema = z.object({
 
 export async function POST(
   request: Request,
-  { params }: { params: { date: string } }
+  { params }: { params: Promise<{ date: string }> }
 ) {
   try {
-    const date = params.date;
+    const { date } = await params;
 
     // Validate date format
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
