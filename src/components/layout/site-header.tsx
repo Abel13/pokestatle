@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, History, Trophy } from "lucide-react";
+import { Archive, BarChart3, History, Trophy } from "lucide-react";
 import { useEffect, useState } from "react";
 import { AuthButton } from "@/components/auth/auth-button";
 import { LogoMark } from "@/components/brand/logo-mark";
@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 
 const links = [
   { href: "/", label: "Play" },
+  { href: "/archive", label: "Archive", icon: Archive },
   { href: "/stats", label: "Stats", icon: BarChart3 },
   { href: "/leaderboard", label: "Rank", icon: Trophy },
   { href: "/history", label: "History", icon: History },

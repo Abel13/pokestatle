@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { AlertCircle, LoaderCircle } from "lucide-react";
 import { LogoMark } from "@/components/brand/logo-mark";
@@ -26,6 +27,8 @@ type ChallengeMeta = {
 };
 
 export function GameBoard() {
+  const searchParams = useSearchParams();
+  const dateParam = searchParams?.get("date");
   const [challenge, setChallenge] = useState<ChallengeMeta | null>(null);
   const [state, setState] = useState<GameState | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -38,7 +41,13 @@ export function GameBoard() {
     async function boot() {
       try {
         setLoading(true);
-        const res = await fetch("/api/challenges/today");
+        
+        // Use date parameter or default to today
+        const challengeEndpoint = dateParam 
+          ? `/api/challenges/${dateParam}`
+          : "/api/challenges/today";
+        
+        const res = await fetch(challengeEndpoint);
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Failed to load challenge");
         if (cancelled) return;
@@ -47,7 +56,10 @@ export function GameBoard() {
         // Try to load from server first (for logged-in users)
         let serverGame: GameState | null = null;
         try {
-          const gameRes = await fetch("/api/me/today-game");
+          const gameEndpoint = dateParam
+            ? `/api/me/today-game?date=${dateParam}`
+            : "/api/me/today-game";
+          const gameRes = await fetch(gameEndpoint);
           const gameData = await gameRes.json();
           if (gameData.game) {
             serverGame = {
@@ -93,7 +105,7 @@ export function GameBoard() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [dateParam]);
 
   const remaining = useMemo(() => {
     if (!state) return MAX_GUESSES;
@@ -115,7 +127,10 @@ export function GameBoard() {
       setSubmitting(true);
       setError(null);
       try {
-        const res = await fetch("/api/challenges/today/guess", {
+        const guessEndpoint = dateParam
+          ? `/api/challenges/${dateParam}/guess`
+          : "/api/challenges/today/guess";
+        const res = await fetch(guessEndpoint, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -171,7 +186,7 @@ export function GameBoard() {
         setSubmitting(false);
       }
     },
-    [state, challenge, submitting],
+    [state, challenge, submitting, dateParam],
   );
 
   if (loading) {
