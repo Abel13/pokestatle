@@ -12,6 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { calculateResultScore } from "@/lib/game/score";
 import { formatShareText } from "@/lib/game/share";
 import type { GuessResult } from "@/lib/game/types";
 import { MAX_GUESSES } from "@/lib/game/types";
@@ -33,6 +34,7 @@ export function ResultModal({
 }) {
   const [copied, setCopied] = useState(false);
   const share = formatShareText(challengeId, results, won, MAX_GUESSES);
+  const resultScore = calculateResultScore(results, won, MAX_GUESSES);
 
   async function copyToClipboard() {
     await navigator.clipboard.writeText(share);
@@ -91,6 +93,33 @@ export function ResultModal({
           </DialogHeader>
 
           <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 py-3">
+            <div className="flex flex-col items-center gap-0.5">
+              <p className="font-heading text-4xl font-semibold tracking-tight tabular-nums sm:text-5xl">
+                {resultScore.score}
+                <span className="text-lg font-medium text-muted-foreground sm:text-xl">
+                  /100
+                </span>
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Grade{" "}
+                <span className="font-semibold text-foreground">
+                  {resultScore.grade}
+                </span>
+                {won ? (
+                  <span className="text-muted-foreground">
+                    {" "}
+                    · efficiency {resultScore.efficiency} · accuracy{" "}
+                    {resultScore.accuracy}
+                  </span>
+                ) : (
+                  <span className="text-muted-foreground">
+                    {" "}
+                    · clue quality {resultScore.accuracy}
+                  </span>
+                )}
+              </p>
+            </div>
+
             {revealed ? (
               <motion.div
                 initial={{ opacity: 0, scale: 0.92 }}

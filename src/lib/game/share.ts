@@ -1,3 +1,4 @@
+import { calculateResultScore, formatScoreLine } from "./score";
 import type { AttributeResult, GuessResult, MatchStatus } from "./types";
 
 /**
@@ -35,7 +36,8 @@ export function formatShareText(
   won: boolean,
   maxGuesses: number,
 ): string {
-  const score = won ? `${results.length}/${maxGuesses}` : `X/${maxGuesses}`;
+  const attempts = won ? `${results.length}/${maxGuesses}` : `X/${maxGuesses}`;
+  const grade = formatScoreLine(calculateResultScore(results, won, maxGuesses));
   const lines = results.map((r) => {
     const a = r.attributes;
     return [
@@ -52,5 +54,5 @@ export function formatShareText(
     ].join("");
   });
 
-  return [`PokéStatle #${challengeId}`, ...lines, score].join("\n");
+  return [`PokéStatle #${challengeId}`, ...lines, attempts, grade].join("\n");
 }
