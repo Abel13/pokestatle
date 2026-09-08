@@ -17,101 +17,60 @@ import {
   saveGameState,
   updateLocalStatsOnComplete,
 } from "@/lib/storage";
-
-type ChallengeMeta = {
-  id: number;
-  date: string;
-  maxGuesses: number;
-  pokemonPoolSize: number;
-  difficulty: string;
-};
+import { useChallenge, useGameState as useGameStateQuery } from "@/lib/queries/use-challenge";
 
 export function GameBoard() {
   const searchParams = useSearchParams();
   const dateParam = searchParams?.get("date");
-  const [challenge, setChallenge] = useState<ChallengeMeta | null>(null);
+  
+  // React Query hooks - fetch in parallel automatically!
+  const { data: challenge, isLoading: loadingChallenge, error: challengeError } = useChallenge(dateParam);
+  const { data: gameData, isLoading: loadingGame } = useGameStateQuery(dateParam);
+  
   const [state, setState] = useState<GameState | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
 
+  // Sync server/localStorage state when data loads
   useEffect(() => {
-    let cancelled = false;
-    async function boot() {
-      try {
-        setLoading(true);
-        
-        // Use date parameter or default to today
-        const challengeEndpoint = dateParam 
-          ? `/api/challenges/${dateParam}`
-          : "/api/challenges/today";
-        
-        const res = await fetch(challengeEndpoint);
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Failed to load challenge");
-        if (cancelled) return;
-        setChallenge(data);
-
-        // Try to load from server first (for logged-in users)
-        let serverGame: GameState | null = null;
-        try {
-          const gameEndpoint = dateParam
-            ? `/api/me/today-game?date=${dateParam}`
-            : "/api/me/today-game";
-          const gameRes = await fetch(gameEndpoint);
-          const gameData = await gameRes.json();
-          if (gameData.game) {
-            serverGame = {
-              challengeId: gameData.game.challengeId,
-              date: data.date,
-              guesses: gameData.game.guesses,
-              results: gameData.game.results,
-              status: gameData.game.status,
-              completedAt: gameData.game.completedAt,
-            };
-          }
-        } catch {
-          // Not logged in or server error, continue with localStorage
-        }
-
-        // Use server state if available, otherwise fallback to localStorage
-        const saved = serverGame || loadGameState(data.date);
-        
-        if (saved && saved.date === data.date) {
-          // Update challengeId if it changed (keep guesses/results)
-          const updated: GameState = {
-            ...saved,
-            challengeId: data.id,
-            date: data.date,
-          };
-          setState(updated);
-          saveGameState(updated); // Sync server state to localStorage
-          if (updated.status !== "PLAYING") setModalOpen(true);
-        } else {
-          const fresh: GameState = {
-            challengeId: data.id,
-            date: data.date,
-            guesses: [],
-            results: [],
-            status: "PLAYING",
-          };
-          setState(fresh);
-          saveGameState(fresh);
-        }
-      } catch (err) {
-        if (!cancelled) {
-          setError(err instanceof Error ? err.message : "Failed to load");
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
+    if (!challenge) return;
+    
+    // Server game state (for logged-in users)
+    const serverGame = gameData?.game ? {
+      challengeId: gameData.game.challengeId,
+      date: challenge.date,
+      guesses: gameData.game.guesses,
+      results: gameData.game.results,
+      status: gameData.game.status,
+      completedAt: gameData.game.completedAt,
+    } : null;
+    
+    // Use server state if available, otherwise fallback to localStorage
+    const saved = serverGame || loadGameState(challenge.date);
+    
+    if (saved && saved.date === challenge.date) {
+      // Update challengeId if it changed (keep guesses/results)
+      const updated: GameState = {
+        ...saved,
+        challengeId: challenge.id,
+        date: challenge.date,
+      };
+      setState(updated);
+      saveGameState(updated);
+      if (updated.status !== "PLAYING") setModalOpen(true);
+    } else {
+      const fresh: GameState = {
+        challengeId: challenge.id,
+        date: challenge.date,
+        guesses: [],
+        results: [],
+        status: "PLAYING",
+      };
+      setState(fresh);
+      saveGameState(fresh);
     }
-    void boot();
-    return () => {
-      cancelled = true;
-    };
-  }, [dateParam]);
+  }, [challenge, gameData]);
 
   const remaining = useMemo(() => {
     if (!state) return MAX_GUESSES;
@@ -195,6 +154,8 @@ export function GameBoard() {
     [state, challenge, submitting, dateParam],
   );
 
+  const loading = loadingChallenge || loadingGame;
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -206,11 +167,15 @@ export function GameBoard() {
     );
   }
 
-  if (error && !challenge) {
+  if (challengeError || (error && !challenge)) {
+    const errorMessage = challengeError instanceof Error 
+      ? challengeError.message 
+      : error || "Failed to load challenge";
+    
     return (
       <div className="flex flex-col items-center gap-3 rounded-xl border border-destructive/30 bg-destructive/5 px-6 py-10 text-center">
         <AlertCircle className="size-6 text-destructive" />
-        <p className="text-sm">{error}</p>
+        <p className="text-sm">{errorMessage}</p>
         <p className="text-xs text-muted-foreground">
           If the pool is empty, run <code className="rounded bg-muted px-1">pnpm sync:pokemon</code>.
         </p>

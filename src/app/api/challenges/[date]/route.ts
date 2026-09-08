@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getOrCreateTodayChallenge, getPoolSize } from "@/lib/db/queries";
+import { getChallenge, getPoolSize } from "@/lib/db/queries";
 import { assertNotFuture } from "@/lib/game/daily";
 import { MAX_GUESSES } from "@/lib/game/types";
 
@@ -24,7 +24,16 @@ export async function GET(
     // Prevent future challenges
     assertNotFuture(date);
 
-    const challenge = await getOrCreateTodayChallenge(date);
+    // For historical dates, only fetch (do not create)
+    const challenge = await getChallenge(date);
+    
+    if (!challenge) {
+      return NextResponse.json(
+        { error: "Challenge for this date doesn't exist." },
+        { status: 404 }
+      );
+    }
+    
     const poolSize = await getPoolSize();
 
     return NextResponse.json({
