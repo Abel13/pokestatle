@@ -60,13 +60,13 @@ export default function ArchivePage() {
           const res = await fetch("/api/me/games");
           if (res.ok) {
             const data = await res.json();
-            const gamesMap = new Map(
+            const gamesMap: Map<string, GameFromAPI> = new Map(
               data.games.map((g: GameFromAPI) => [g.date, g])
             );
 
             // Mark played challenges
             days.forEach((day) => {
-              const game: GameFromAPI | undefined = gamesMap.get(day.date);
+              const game = gamesMap.get(day.date);
               if (game) {
                 day.played = true;
                 day.status = game.status as "WON" | "LOST";
