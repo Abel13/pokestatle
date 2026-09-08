@@ -15,6 +15,10 @@ type Entry = {
   completedAt: string | null;
   currentStreak: number;
   maxStreak: number;
+  score: number;
+  grade: string;
+  efficiency: number;
+  accuracy: number;
 };
 
 export default function LeaderboardPage() {
@@ -92,6 +96,17 @@ export default function LeaderboardPage() {
                   </Badge>
                 ) : null}
               </div>
+              <p className="text-xs text-muted-foreground">
+                {entry.status === "WON" ? (
+                  <>
+                    {entry.score}/100 · {entry.grade} · efficiency {entry.efficiency} · accuracy {entry.accuracy}
+                  </>
+                ) : (
+                  <>
+                    {entry.score}/100 · {entry.grade} · clue quality {entry.accuracy}
+                  </>
+                )}
+              </p>
               <p className="text-xs text-muted-foreground">
                 Streak {entry.currentStreak} · Best {entry.maxStreak}
               </p>

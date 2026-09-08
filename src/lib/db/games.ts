@@ -7,6 +7,7 @@ import {
   usePostgres,
 } from "@/lib/db";
 import type { GuessResult } from "@/lib/game/types";
+import { calculateResultScore } from "@/lib/game/score";
 
 function parseJsonArray<T>(value: unknown): T[] {
   if (Array.isArray(value)) return value as T[];
@@ -115,6 +116,23 @@ export async function persistGuessForUser(input: {
     const completedAt =
       status === "PLAYING" ? null : new Date();
 
+    let scoreData: {
+      score: number | null;
+      grade: string | null;
+      efficiency: number | null;
+      accuracy: number | null;
+    } = { score: null, grade: null, efficiency: null, accuracy: null };
+
+    if (status !== "PLAYING") {
+      const resultScore = calculateResultScore(results, input.won, 6);
+      scoreData = {
+        score: resultScore.score,
+        grade: resultScore.grade,
+        efficiency: resultScore.efficiency,
+        accuracy: resultScore.accuracy,
+      };
+    }
+
     if (existing) {
       await db
         .update(pgSchema.games)
@@ -123,6 +141,10 @@ export async function persistGuessForUser(input: {
           guessesJson: guesses,
           resultsJson: results,
           completedAt,
+          score: scoreData.score,
+          grade: scoreData.grade,
+          efficiency: scoreData.efficiency,
+          accuracy: scoreData.accuracy,
         })
         .where(eq(pgSchema.games.id, existing.id));
     } else {
@@ -133,6 +155,10 @@ export async function persistGuessForUser(input: {
         guessesJson: guesses,
         resultsJson: results,
         completedAt,
+        score: scoreData.score,
+        grade: scoreData.grade,
+        efficiency: scoreData.efficiency,
+        accuracy: scoreData.accuracy,
       });
     }
 
@@ -175,6 +201,23 @@ export async function persistGuessForUser(input: {
   const completedAt =
     status === "PLAYING" ? null : new Date().toISOString();
 
+  let scoreData: {
+    score: number | null;
+    grade: string | null;
+    efficiency: number | null;
+    accuracy: number | null;
+  } = { score: null, grade: null, efficiency: null, accuracy: null };
+
+  if (status !== "PLAYING") {
+    const resultScore = calculateResultScore(results, input.won, 6);
+    scoreData = {
+      score: resultScore.score,
+      grade: resultScore.grade,
+      efficiency: resultScore.efficiency,
+      accuracy: resultScore.accuracy,
+    };
+  }
+
   if (existing) {
     db.update(schema.games)
       .set({
@@ -182,6 +225,10 @@ export async function persistGuessForUser(input: {
         guessesJson: JSON.stringify(guesses),
         resultsJson: JSON.stringify(results),
         completedAt,
+        score: scoreData.score,
+        grade: scoreData.grade,
+        efficiency: scoreData.efficiency,
+        accuracy: scoreData.accuracy,
       })
       .where(eq(schema.games.id, existing.id))
       .run();
@@ -194,6 +241,10 @@ export async function persistGuessForUser(input: {
         guessesJson: JSON.stringify(guesses),
         resultsJson: JSON.stringify(results),
         completedAt,
+        score: scoreData.score,
+        grade: scoreData.grade,
+        efficiency: scoreData.efficiency,
+        accuracy: scoreData.accuracy,
       })
       .run();
   }
@@ -459,6 +510,10 @@ export async function getTodayLeaderboard(challengeId: number, limit = 20) {
         completedAt: pgSchema.games.completedAt,
         currentStreak: pgSchema.userStats.currentStreak,
         maxStreak: pgSchema.userStats.maxStreak,
+        score: pgSchema.games.score,
+        grade: pgSchema.games.grade,
+        efficiency: pgSchema.games.efficiency,
+        accuracy: pgSchema.games.accuracy,
       })
       .from(pgSchema.games)
       .innerJoin(
@@ -482,6 +537,10 @@ export async function getTodayLeaderboard(challengeId: number, limit = 20) {
         completedAt: asIso(r.completedAt),
         currentStreak: r.currentStreak ?? 0,
         maxStreak: r.maxStreak ?? 0,
+        score: r.score ?? 0,
+        grade: r.grade ?? "F",
+        efficiency: r.efficiency ?? 0,
+        accuracy: r.accuracy ?? 0,
       }))
       .sort((a, b) => {
         if (a.status !== b.status) {
@@ -504,6 +563,10 @@ export async function getTodayLeaderboard(challengeId: number, limit = 20) {
       completedAt: schema.games.completedAt,
       currentStreak: schema.userStats.currentStreak,
       maxStreak: schema.userStats.maxStreak,
+      score: schema.games.score,
+      grade: schema.games.grade,
+      efficiency: schema.games.efficiency,
+      accuracy: schema.games.accuracy,
     })
     .from(schema.games)
     .innerJoin(schema.profiles, eq(schema.games.userId, schema.profiles.id))
@@ -520,6 +583,10 @@ export async function getTodayLeaderboard(challengeId: number, limit = 20) {
       completedAt: r.completedAt,
       currentStreak: r.currentStreak ?? 0,
       maxStreak: r.maxStreak ?? 0,
+      score: r.score ?? 0,
+      grade: r.grade ?? "F",
+      efficiency: r.efficiency ?? 0,
+      accuracy: r.accuracy ?? 0,
     }))
     .sort((a, b) => {
       if (a.status !== b.status) {
