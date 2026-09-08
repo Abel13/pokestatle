@@ -9,8 +9,8 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   try {
     const date = getChallengeDate();
-    const challenge = getOrCreateTodayChallenge(date);
-    const entries = getTodayLeaderboard(challenge.id, 25);
+    const challenge = await getOrCreateTodayChallenge(date);
+    const entries = await getTodayLeaderboard(challenge.id, 25);
     return NextResponse.json({
       challengeId: challenge.id,
       date,

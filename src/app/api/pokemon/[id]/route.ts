@@ -9,7 +9,7 @@ export async function GET(
   context: { params: Promise<{ id: string }> },
 ) {
   const { id } = await context.params;
-  const pokemon = getPokemonById(Number(id));
+  const pokemon = await getPokemonById(Number(id));
   if (!pokemon) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }

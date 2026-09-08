@@ -12,12 +12,12 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   try {
     const date = getChallengeDate();
-    const challenge = getOrCreateTodayChallenge(date);
+    const challenge = await getOrCreateTodayChallenge(date);
     return NextResponse.json({
       id: challenge.id,
       date: challenge.date,
       maxGuesses: MAX_GUESSES,
-      pokemonPoolSize: getPoolSize(),
+      pokemonPoolSize: await getPoolSize(),
       difficulty: challenge.difficulty,
     });
   } catch (error) {

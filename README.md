@@ -6,8 +6,8 @@ Daily Pokémon guessing game inspired by Wordle. Everyone gets the same secret P
 
 - Next.js (App Router) + TypeScript + Tailwind CSS + shadcn/ui
 - Framer Motion animations, Outfit font, light/dark themes
-- Local SQLite (Drizzle) for gameplay data — synced from PokéAPI
-- Supabase Auth (Google) optional for account sync, stats, history, leaderboard
+- Local SQLite (Drizzle) for offline/guest gameplay
+- Supabase Auth (Google) + Postgres for production catalog, games, stats, leaderboard
 - Custom local Supabase ports (not the defaults): API `54331`, DB `54332`, Studio `54333`
 
 ## Quick start
@@ -21,39 +21,45 @@ pnpm dev
 
 App: [http://127.0.0.1:43127](http://127.0.0.1:43127)
 
-`pnpm sync:pokemon` pulls species from PokéAPI, keeps standard forms (Gens I–IX), and upserts into `data/pokestatle.db`. A committed seed file `data/pokestatle.seed.db` is used on Vercel (copied into `/tmp` because the serverless filesystem is read-only). The daily challenge never calls PokéAPI during play.
+`pnpm sync:pokemon` pulls species from PokéAPI, keeps standard forms (Gens I–IX), and upserts into `data/pokestatle.db`. A committed seed file `data/pokestatle.seed.db` backs local/Vercel fallback when `DATABASE_URL` is unset.
 
 ## Environment
 
 | Variable | Purpose |
 |---|---|
 | `SECRET_SALT` | Server-only salt for deterministic daily Pokémon |
-| `NEXT_PUBLIC_SUPABASE_URL` | Optional — enable Google Auth |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Optional — Supabase anon key |
+| `NEXT_PUBLIC_SUPABASE_URL` | Enable Google Auth |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key |
+| `DATABASE_URL` | Supabase Postgres URI — required for production persistence |
 
-Without Supabase credentials the game runs fully in **guest mode** (progress in `localStorage`).
+Without Supabase credentials the game runs fully in **guest mode** (progress in `localStorage`, SQLite catalog).
 
-### Google Auth
+### Google Auth + empty Supabase DB
 
-1. Start or create a Supabase project (`supabase start` uses the custom ports in `supabase/config.toml`).
-2. Enable the Google provider and set Client ID/Secret.
-3. Add redirect URL: `http://127.0.0.1:43127/api/auth/callback`
-4. Copy URL + anon key into `.env.local`.
+Auth env vars alone do **not** create tables or seed Pokémon. After connecting the project:
 
-SQL migrations for Postgres live in `supabase/migrations/`.
+1. Enable the Google provider and set Client ID/Secret.
+2. Add redirect URL: `https://pokestatle.vercel.app/api/auth/callback` (and local if needed).
+3. Copy the Postgres connection string into `DATABASE_URL` (local `.env.local` and Vercel).
+4. Run `pnpm db:push-supabase` once to apply migrations and seed `public.pokemon`.
+5. Redeploy Vercel so the app uses Postgres instead of the ephemeral SQLite copy.
+
+SQL migrations live in `supabase/migrations/`.
 
 ## Game rules (short)
 
 - Max 6 guesses
-- Attribute feedback: `EXACT` / `VERY_CLOSE` (≤10%) / `CLOSE` (≤25%) / `FAR`, plus up/down
+- Attribute feedback: far → direction only; close/exact → color only
 - Types: match / no match per type on the guess
-- Future dates are not accessible
-- Share text uses emoji squares (🟩🟨🟧⬛) plus direction arrows — without revealing the Pokémon name
+- Result score 0–100 + letter grade
+- Share text uses emoji without revealing the Pokémon name
 
 ## Scripts
 
 - `pnpm dev` — Next.js on port **43127**
-- `pnpm sync:pokemon` — refresh local Pokémon pool
+- `pnpm sync:pokemon` — refresh local Pokémon pool (SQLite)
+- `pnpm db:push-supabase` — apply schema + seed Supabase Postgres from local seed
+- `pnpm challenge:today` — materialize today's challenge row
 - `pnpm build` / `pnpm start` — production
 
 ## Buy me a coffee

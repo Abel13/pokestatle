@@ -3,8 +3,15 @@
 
 create extension if not exists "pgcrypto";
 
-create type public.difficulty as enum ('EASY', 'NORMAL', 'HARD', 'EXPERT');
-create type public.game_status as enum ('PLAYING', 'WON', 'LOST');
+do $$ begin
+  create type public.difficulty as enum ('EASY', 'NORMAL', 'HARD', 'EXPERT');
+exception when duplicate_object then null;
+end $$;
+
+do $$ begin
+  create type public.game_status as enum ('PLAYING', 'WON', 'LOST');
+exception when duplicate_object then null;
+end $$;
 
 create table if not exists public.pokemon (
   id integer primary key,

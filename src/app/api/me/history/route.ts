@@ -19,5 +19,5 @@ export async function GET() {
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  return NextResponse.json(getUserHistory(user.id));
+  return NextResponse.json(await getUserHistory(user.id));
 }

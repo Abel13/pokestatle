@@ -7,6 +7,6 @@ export const dynamic = "force-dynamic";
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const q = searchParams.get("q") ?? "";
-  const results = searchPokemon(q, 12);
+  const results = await searchPokemon(q, 12);
   return NextResponse.json(results);
 }

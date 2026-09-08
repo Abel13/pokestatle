@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     const json = await request.json();
     const body = bodySchema.parse(json);
     const date = getChallengeDate();
-    const challenge = getOrCreateTodayChallenge(date);
+    const challenge = await getOrCreateTodayChallenge(date);
     const previous = body.previousGuesses ?? [];
 
     if (previous.length >= MAX_GUESSES) {
@@ -40,7 +40,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const guess = getPokemonById(body.pokemonId);
+    const guess = await getPokemonById(body.pokemonId);
     if (!guess) {
       return NextResponse.json(
         { error: "Pokémon not found in the eligible pool." },
@@ -48,7 +48,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const target = getPokemonById(challenge.pokemonId);
+    const target = await getPokemonById(challenge.pokemonId);
     if (!target) {
       return NextResponse.json(
         { error: "Challenge target missing." },

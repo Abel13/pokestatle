@@ -40,7 +40,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const challenge = getOrCreateTodayChallenge(today);
+  const challenge = await getOrCreateTodayChallenge(today);
   if (challenge.id !== body.challengeId) {
     return NextResponse.json({ error: "Challenge mismatch" }, { status: 400 });
   }
@@ -55,14 +55,14 @@ export async function POST(request: Request) {
     avatarUrl: user.user_metadata?.avatar_url ?? null,
   });
 
-  const target = getPokemonById(challenge.pokemonId);
+  const target = await getPokemonById(challenge.pokemonId);
   if (!target) {
     return NextResponse.json({ error: "Target missing" }, { status: 500 });
   }
 
   for (let i = 0; i < body.guesses.length; i++) {
     const id = body.guesses[i]!;
-    const guess = getPokemonById(id);
+    const guess = await getPokemonById(id);
     if (!guess) continue;
     const result = comparePokemon(guess, target);
     const won = result.isCorrect;

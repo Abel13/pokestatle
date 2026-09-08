@@ -7,14 +7,14 @@ import { getOrCreateTodayChallenge, getPoolSize } from "../src/lib/db/queries";
 import { getChallengeDate } from "../src/lib/game/daily";
 
 const date = getChallengeDate();
-const challenge = getOrCreateTodayChallenge(date);
+const challenge = await getOrCreateTodayChallenge(date);
 console.log(
   JSON.stringify(
     {
       id: challenge.id,
       date: challenge.date,
       difficulty: challenge.difficulty,
-      pokemonPoolSize: getPoolSize(),
+      pokemonPoolSize: await getPoolSize(),
       // pokemon_id intentionally omitted from logs in production usage
     },
     null,

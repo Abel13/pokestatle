@@ -1,8 +1,11 @@
 import Database from "better-sqlite3";
-import { drizzle } from "drizzle-orm/better-sqlite3";
+import { drizzle as drizzleSqlite } from "drizzle-orm/better-sqlite3";
+import { drizzle as drizzlePg } from "drizzle-orm/postgres-js";
 import fs from "fs";
 import path from "path";
-import * as schema from "./schema";
+import postgres from "postgres";
+import * as sqliteSchema from "./schema";
+import { pgSchema } from "./schema-pg";
 
 const isServerless = Boolean(
   process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME,
@@ -16,6 +19,20 @@ const DATA_DIR = isServerless
 const DB_PATH = path.join(DATA_DIR, "pokestatle.db");
 const SEED_PATH = path.join(process.cwd(), "data", "pokestatle.seed.db");
 
+export function getDatabaseUrl(): string | undefined {
+  return (
+    process.env.DATABASE_URL ||
+    process.env.POSTGRES_URL ||
+    process.env.POSTGRES_PRISMA_URL ||
+    process.env.SUPABASE_DB_URL ||
+    undefined
+  );
+}
+
+export function usePostgres(): boolean {
+  return Boolean(getDatabaseUrl());
+}
+
 function ensureDataDir() {
   if (!fs.existsSync(DATA_DIR)) {
     fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -28,10 +45,7 @@ function ensureSeededDatabase() {
 
   if (fs.existsSync(SEED_PATH)) {
     fs.copyFileSync(SEED_PATH, DB_PATH);
-    return;
   }
-
-  // Empty DB — schema will be applied; sync:pokemon still needed for local empty installs.
 }
 
 function ensureSchema(sqlite: Database.Database) {
@@ -98,23 +112,51 @@ function ensureSchema(sqlite: Database.Database) {
   `);
 }
 
-let cached: ReturnType<typeof drizzle<typeof schema>> | null = null;
+type SqliteDb = ReturnType<typeof drizzleSqlite<typeof sqliteSchema>>;
+type PgDb = ReturnType<typeof drizzlePg<typeof pgSchema>>;
 
-export function getDb() {
-  if (cached) return cached;
+let sqliteCached: SqliteDb | null = null;
+let pgCached: PgDb | null = null;
+let pgSql: ReturnType<typeof postgres> | null = null;
+
+export function getSqliteDb(): SqliteDb {
+  if (sqliteCached) return sqliteCached;
   ensureSeededDatabase();
   const sqlite = new Database(DB_PATH);
-  // DELETE is safer than WAL on ephemeral /tmp (serverless).
   sqlite.pragma(isServerless ? "journal_mode = DELETE" : "journal_mode = WAL");
   sqlite.pragma("foreign_keys = ON");
   ensureSchema(sqlite);
-  cached = drizzle(sqlite, { schema });
-  return cached;
+  sqliteCached = drizzleSqlite(sqlite, { schema: sqliteSchema });
+  return sqliteCached;
+}
+
+export function getPgDb(): PgDb {
+  if (pgCached) return pgCached;
+  const url = getDatabaseUrl();
+  if (!url) {
+    throw new Error(
+      "Postgres requested but DATABASE_URL / POSTGRES_URL is not set.",
+    );
+  }
+  pgSql = postgres(url, {
+    prepare: false,
+    max: isServerless ? 1 : 5,
+    idle_timeout: 20,
+    connect_timeout: 30,
+  });
+  pgCached = drizzlePg(pgSql, { schema: pgSchema });
+  return pgCached;
+}
+
+/** @deprecated Prefer getSqliteDb / getPgDb / usePostgres(). Kept for local scripts. */
+export function getDb() {
+  if (usePostgres()) return getPgDb();
+  return getSqliteDb();
 }
 
 export function getSqlite() {
-  getDb();
+  getSqliteDb();
   return new Database(DB_PATH);
 }
 
-export { schema };
+export { sqliteSchema as schema, pgSchema, SEED_PATH, DB_PATH };

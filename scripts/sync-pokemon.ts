@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { getDb, schema } from "../src/lib/db";
+import { getSqliteDb, schema } from "../src/lib/db";
 import {
   classifyDifficulty,
   isEligibleSlug,
@@ -112,7 +112,7 @@ async function main() {
     `${API}/pokemon-species?limit=2000`,
   );
 
-  const db = getDb();
+  const db = getSqliteDb();
   let upserted = 0;
   let skipped = 0;
 

@@ -1,13 +1,58 @@
 import { and, eq } from "drizzle-orm";
-import { getDb, schema } from "@/lib/db";
+import {
+  getPgDb,
+  getSqliteDb,
+  pgSchema,
+  schema,
+  usePostgres,
+} from "@/lib/db";
 import type { GuessResult } from "@/lib/game/types";
+
+function parseJsonArray<T>(value: unknown): T[] {
+  if (Array.isArray(value)) return value as T[];
+  if (typeof value === "string") {
+    try {
+      return JSON.parse(value) as T[];
+    } catch {
+      return [];
+    }
+  }
+  return [];
+}
+
+function asIso(value: Date | string | null | undefined): string | null {
+  if (!value) return null;
+  if (value instanceof Date) return value.toISOString();
+  return value;
+}
 
 export async function ensureProfile(input: {
   userId: string;
   displayName: string;
   avatarUrl: string | null;
 }) {
-  const db = getDb();
+  if (usePostgres()) {
+    const db = getPgDb();
+    const existing = await db
+      .select()
+      .from(pgSchema.profiles)
+      .where(eq(pgSchema.profiles.id, input.userId))
+      .limit(1);
+    if (existing[0]) return;
+
+    await db.insert(pgSchema.profiles).values({
+      id: input.userId,
+      displayName: input.displayName,
+      avatarUrl: input.avatarUrl,
+    });
+    await db
+      .insert(pgSchema.userStats)
+      .values({ userId: input.userId })
+      .onConflictDoNothing();
+    return;
+  }
+
+  const db = getSqliteDb();
   const existing = db
     .select()
     .from(schema.profiles)
@@ -39,7 +84,70 @@ export async function persistGuessForUser(input: {
   avatarUrl: string | null;
 }) {
   await ensureProfile(input);
-  const db = getDb();
+
+  if (usePostgres()) {
+    const db = getPgDb();
+    const existingRows = await db
+      .select()
+      .from(pgSchema.games)
+      .where(
+        and(
+          eq(pgSchema.games.userId, input.userId),
+          eq(pgSchema.games.challengeId, input.challengeId),
+        ),
+      )
+      .limit(1);
+    const existing = existingRows[0];
+
+    const guesses = existing
+      ? parseJsonArray<number>(existing.guessesJson)
+      : [];
+    const results = existing
+      ? parseJsonArray<GuessResult>(existing.resultsJson)
+      : [];
+
+    if (guesses.includes(input.guessId)) return;
+
+    guesses.push(input.guessId);
+    results.push(input.result);
+
+    const status = input.won ? "WON" : input.lost ? "LOST" : "PLAYING";
+    const completedAt =
+      status === "PLAYING" ? null : new Date();
+
+    if (existing) {
+      await db
+        .update(pgSchema.games)
+        .set({
+          status,
+          guessesJson: guesses,
+          resultsJson: results,
+          completedAt,
+        })
+        .where(eq(pgSchema.games.id, existing.id));
+    } else {
+      await db.insert(pgSchema.games).values({
+        userId: input.userId,
+        challengeId: input.challengeId,
+        status,
+        guessesJson: guesses,
+        resultsJson: results,
+        completedAt,
+      });
+    }
+
+    if (status === "WON" || status === "LOST") {
+      await updateStatsOnComplete({
+        userId: input.userId,
+        challengeId: input.challengeId,
+        won: input.won,
+        guessCount: guesses.length,
+      });
+    }
+    return;
+  }
+
+  const db = getSqliteDb();
   const existing = db
     .select()
     .from(schema.games)
@@ -91,7 +199,7 @@ export async function persistGuessForUser(input: {
   }
 
   if (status === "WON" || status === "LOST") {
-    updateStatsOnComplete({
+    await updateStatsOnComplete({
       userId: input.userId,
       challengeId: input.challengeId,
       won: input.won,
@@ -100,13 +208,72 @@ export async function persistGuessForUser(input: {
   }
 }
 
-function updateStatsOnComplete(input: {
+async function updateStatsOnComplete(input: {
   userId: string;
   challengeId: number;
   won: boolean;
   guessCount: number;
 }) {
-  const db = getDb();
+  if (usePostgres()) {
+    const db = getPgDb();
+    const statsRows = await db
+      .select()
+      .from(pgSchema.userStats)
+      .where(eq(pgSchema.userStats.userId, input.userId))
+      .limit(1);
+    const stats = statsRows[0];
+
+    const distribution = stats
+      ? parseJsonArray<number>(stats.distributionJson)
+      : [0, 0, 0, 0, 0, 0];
+    while (distribution.length < 6) distribution.push(0);
+
+    let currentStreak = stats?.currentStreak ?? 0;
+    let maxStreak = stats?.maxStreak ?? 0;
+    const last = stats?.lastChallengeId ?? null;
+
+    if (input.won) {
+      if (last && input.challengeId === last + 1) currentStreak += 1;
+      else if (last !== input.challengeId) currentStreak = 1;
+      maxStreak = Math.max(maxStreak, currentStreak);
+      if (input.guessCount >= 1 && input.guessCount <= 6) {
+        distribution[input.guessCount - 1] =
+          (distribution[input.guessCount - 1] ?? 0) + 1;
+      }
+    } else {
+      currentStreak = 0;
+    }
+
+    const played = (stats?.played ?? 0) + (last === input.challengeId ? 0 : 1);
+    const wins =
+      (stats?.wins ?? 0) + (input.won && last !== input.challengeId ? 1 : 0);
+
+    await db
+      .insert(pgSchema.userStats)
+      .values({
+        userId: input.userId,
+        played,
+        wins,
+        currentStreak,
+        maxStreak,
+        distributionJson: distribution,
+        lastChallengeId: input.challengeId,
+      })
+      .onConflictDoUpdate({
+        target: pgSchema.userStats.userId,
+        set: {
+          played,
+          wins,
+          currentStreak,
+          maxStreak,
+          distributionJson: distribution,
+          lastChallengeId: input.challengeId,
+        },
+      });
+    return;
+  }
+
+  const db = getSqliteDb();
   const stats = db
     .select()
     .from(schema.userStats)
@@ -163,8 +330,36 @@ function updateStatsOnComplete(input: {
     .run();
 }
 
-export function getUserStats(userId: string) {
-  const db = getDb();
+export async function getUserStats(userId: string) {
+  if (usePostgres()) {
+    const rows = await getPgDb()
+      .select()
+      .from(pgSchema.userStats)
+      .where(eq(pgSchema.userStats.userId, userId))
+      .limit(1);
+    const stats = rows[0];
+    if (!stats) {
+      return {
+        played: 0,
+        wins: 0,
+        winPct: 0,
+        currentStreak: 0,
+        maxStreak: 0,
+        distribution: [0, 0, 0, 0, 0, 0],
+      };
+    }
+    const distribution = parseJsonArray<number>(stats.distributionJson);
+    return {
+      played: stats.played,
+      wins: stats.wins,
+      winPct: stats.played ? Math.round((stats.wins / stats.played) * 100) : 0,
+      currentStreak: stats.currentStreak,
+      maxStreak: stats.maxStreak,
+      distribution,
+    };
+  }
+
+  const db = getSqliteDb();
   const stats = db
     .select()
     .from(schema.userStats)
@@ -191,8 +386,38 @@ export function getUserStats(userId: string) {
   };
 }
 
-export function getUserHistory(userId: string, limit = 30) {
-  const db = getDb();
+export async function getUserHistory(userId: string, limit = 30) {
+  if (usePostgres()) {
+    const rows = await getPgDb()
+      .select({
+        challengeId: pgSchema.games.challengeId,
+        status: pgSchema.games.status,
+        guessesJson: pgSchema.games.guessesJson,
+        completedAt: pgSchema.games.completedAt,
+        date: pgSchema.dailyChallenges.date,
+        difficulty: pgSchema.dailyChallenges.difficulty,
+      })
+      .from(pgSchema.games)
+      .innerJoin(
+        pgSchema.dailyChallenges,
+        eq(pgSchema.games.challengeId, pgSchema.dailyChallenges.id),
+      )
+      .where(eq(pgSchema.games.userId, userId));
+
+    return rows
+      .sort((a, b) => b.challengeId - a.challengeId)
+      .slice(0, limit)
+      .map((r) => ({
+        challengeId: r.challengeId,
+        date: r.date,
+        difficulty: r.difficulty,
+        status: r.status,
+        guesses: parseJsonArray<number>(r.guessesJson),
+        completedAt: asIso(r.completedAt),
+      }));
+  }
+
+  const db = getSqliteDb();
   const rows = db
     .select({
       challengeId: schema.games.challengeId,
@@ -222,8 +447,49 @@ export function getUserHistory(userId: string, limit = 30) {
   }));
 }
 
-export function getTodayLeaderboard(challengeId: number, limit = 20) {
-  const db = getDb();
+export async function getTodayLeaderboard(challengeId: number, limit = 20) {
+  if (usePostgres()) {
+    const rows = await getPgDb()
+      .select({
+        userId: pgSchema.games.userId,
+        displayName: pgSchema.profiles.displayName,
+        avatarUrl: pgSchema.profiles.avatarUrl,
+        status: pgSchema.games.status,
+        guessesJson: pgSchema.games.guessesJson,
+        completedAt: pgSchema.games.completedAt,
+        currentStreak: pgSchema.userStats.currentStreak,
+        maxStreak: pgSchema.userStats.maxStreak,
+      })
+      .from(pgSchema.games)
+      .innerJoin(
+        pgSchema.profiles,
+        eq(pgSchema.games.userId, pgSchema.profiles.id),
+      )
+      .leftJoin(
+        pgSchema.userStats,
+        eq(pgSchema.games.userId, pgSchema.userStats.userId),
+      )
+      .where(eq(pgSchema.games.challengeId, challengeId));
+
+    return rows
+      .filter((r) => r.status === "WON")
+      .map((r) => ({
+        userId: r.userId,
+        displayName: r.displayName || "Trainer",
+        avatarUrl: r.avatarUrl,
+        guesses: parseJsonArray<number>(r.guessesJson).length,
+        completedAt: asIso(r.completedAt),
+        currentStreak: r.currentStreak ?? 0,
+        maxStreak: r.maxStreak ?? 0,
+      }))
+      .sort((a, b) => {
+        if (a.guesses !== b.guesses) return a.guesses - b.guesses;
+        return (a.completedAt || "").localeCompare(b.completedAt || "");
+      })
+      .slice(0, limit);
+  }
+
+  const db = getSqliteDb();
   const rows = db
     .select({
       userId: schema.games.userId,
