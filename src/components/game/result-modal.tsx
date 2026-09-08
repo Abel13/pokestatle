@@ -53,7 +53,6 @@ export function ResultModal({
         await navigator.share({
           title: `PokéStatle #${challengeId}`,
           text: share,
-          url: siteUrl,
         });
         return;
       } catch (err) {
