@@ -41,8 +41,8 @@ Auth env vars alone do **not** create tables or seed Pokémon. After connecting 
 1. Enable the Google provider and set Client ID/Secret.
 2. Add redirect URL: `https://pokestatle.vercel.app/api/auth/callback` (and local if needed).
 3. Ensure a Postgres URL is present on Vercel — usually `POSTGRES_URL` or `STORAGE_POSTGRES_URL` from the Supabase integration (the app accepts those names; `DATABASE_URL` is optional).
-4. Run `pnpm db:push-supabase` once (with that URL in `.env.local`) to apply migrations and seed `public.pokemon`.
-5. Redeploy Vercel so production uses Postgres.
+4. Redeploy Vercel — `pnpm build` runs `db:push-supabase` automatically when `POSTGRES_URL` / `STORAGE_POSTGRES_URL` is present, applying schema and seeding Pokémon (skips re-seed if the catalog is already full).
+5. Optional local one-shot: `pnpm db:push-supabase` (or `FORCE_DB_PUSH=1` to refresh).
 
 SQL migrations live in `supabase/migrations/`.
 
@@ -58,9 +58,9 @@ SQL migrations live in `supabase/migrations/`.
 
 - `pnpm dev` — Next.js on port **43127**
 - `pnpm sync:pokemon` — refresh local Pokémon pool (SQLite)
-- `pnpm db:push-supabase` — apply schema + seed Supabase Postgres from local seed
+- `pnpm db:push-supabase` — apply schema + seed Supabase Postgres (also runs on Vercel build)
 - `pnpm challenge:today` — materialize today's challenge row
-- `pnpm build` / `pnpm start` — production
+- `pnpm build` / `pnpm start` — production (`build` seeds Postgres when a URL is set)
 
 ## Buy me a coffee
 

@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --port 43127",
-    "build": "next build",
+    "build": "pnpm db:push-supabase && next build",
     "start": "next start --port 43127",
     "lint": "eslint",
     "sync:pokemon": "tsx scripts/sync-pokemon.ts",
