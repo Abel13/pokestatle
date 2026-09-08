@@ -61,7 +61,7 @@ export default function ArchivePage() {
           if (res.ok) {
             const data = await res.json();
             const gamesMap = new Map(
-              data.games.map((g: any) => [g.date, g])
+              data.games.map((g: GameFromAPI) => [g.date, g])
             );
 
             // Mark played challenges
@@ -69,11 +69,11 @@ export default function ArchivePage() {
               const game = gamesMap.get(day.date);
               if (game) {
                 day.played = true;
-                day.status = game.status;
+                day.status = game.status as "WON" | "LOST";
                 day.guesses = game.guesses.length;
                 day.results = game.results;
-                day.score = game.score;
-                day.grade = game.grade;
+                day.score = game.score ?? undefined;
+                day.grade = game.grade ?? undefined;
               }
             });
           }
