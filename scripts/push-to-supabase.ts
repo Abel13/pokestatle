@@ -40,7 +40,7 @@ async function main() {
   const url = getDatabaseUrl();
   if (!url) {
     console.error(
-      "Missing DATABASE_URL / POSTGRES_URL / POSTGRES_PRISMA_URL / SUPABASE_DB_URL",
+      "Missing Postgres URL. Set DATABASE_URL, POSTGRES_URL, or STORAGE_POSTGRES_URL (Vercel Supabase integration).",
     );
     process.exit(1);
   }

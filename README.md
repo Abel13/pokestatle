@@ -30,7 +30,7 @@ App: [http://127.0.0.1:43127](http://127.0.0.1:43127)
 | `SECRET_SALT` | Server-only salt for deterministic daily Pokémon |
 | `NEXT_PUBLIC_SUPABASE_URL` | Enable Google Auth |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key |
-| `DATABASE_URL` | Supabase Postgres URI — required for production persistence |
+| `DATABASE_URL` / `POSTGRES_URL` / `STORAGE_POSTGRES_URL` | Supabase Postgres URI (any of these names works) |
 
 Without Supabase credentials the game runs fully in **guest mode** (progress in `localStorage`, SQLite catalog).
 
@@ -40,9 +40,9 @@ Auth env vars alone do **not** create tables or seed Pokémon. After connecting 
 
 1. Enable the Google provider and set Client ID/Secret.
 2. Add redirect URL: `https://pokestatle.vercel.app/api/auth/callback` (and local if needed).
-3. Copy the Postgres connection string into `DATABASE_URL` (local `.env.local` and Vercel).
-4. Run `pnpm db:push-supabase` once to apply migrations and seed `public.pokemon`.
-5. Redeploy Vercel so the app uses Postgres instead of the ephemeral SQLite copy.
+3. Ensure a Postgres URL is present on Vercel — usually `POSTGRES_URL` or `STORAGE_POSTGRES_URL` from the Supabase integration (the app accepts those names; `DATABASE_URL` is optional).
+4. Run `pnpm db:push-supabase` once (with that URL in `.env.local`) to apply migrations and seed `public.pokemon`.
+5. Redeploy Vercel so production uses Postgres.
 
 SQL migrations live in `supabase/migrations/`.
 

@@ -19,12 +19,44 @@ const DATA_DIR = isServerless
 const DB_PATH = path.join(DATA_DIR, "pokestatle.db");
 const SEED_PATH = path.join(process.cwd(), "data", "pokestatle.seed.db");
 
+function firstEnv(...keys: string[]): string | undefined {
+  for (const key of keys) {
+    const value = process.env[key]?.trim();
+    if (value) return value;
+  }
+  return undefined;
+}
+
+/** Build a URI from discrete POSTGRES_* parts (Vercel/Supabase integration). */
+function urlFromPostgresParts(prefix = ""): string | undefined {
+  const user = firstEnv(`${prefix}POSTGRES_USER`);
+  const password = firstEnv(`${prefix}POSTGRES_PASSWORD`);
+  const host = firstEnv(`${prefix}POSTGRES_HOST`);
+  const database = firstEnv(`${prefix}POSTGRES_DATABASE`) || "postgres";
+  if (!user || !password || !host) return undefined;
+  return `postgresql://${encodeURIComponent(user)}:${encodeURIComponent(password)}@${host}:5432/${database}`;
+}
+
+/**
+ * Resolve the Postgres connection string across common Vercel / Supabase names.
+ * Also supports a custom integration prefix like STORAGE_*.
+ */
 export function getDatabaseUrl(): string | undefined {
   return (
-    process.env.DATABASE_URL ||
-    process.env.POSTGRES_URL ||
-    process.env.POSTGRES_PRISMA_URL ||
-    process.env.SUPABASE_DB_URL ||
+    firstEnv(
+      "DATABASE_URL",
+      "POSTGRES_URL",
+      "POSTGRES_PRISMA_URL",
+      "POSTGRES_URL_NON_POOLING",
+      "SUPABASE_DB_URL",
+      // Custom prefix used by some Supabase↔Vercel integrations
+      "STORAGE_DATABASE_URL",
+      "STORAGE_POSTGRES_URL",
+      "STORAGE_POSTGRES_PRISMA_URL",
+      "STORAGE_POSTGRES_URL_NON_POOLING",
+    ) ||
+    urlFromPostgresParts() ||
+    urlFromPostgresParts("STORAGE_") ||
     undefined
   );
 }
@@ -135,7 +167,7 @@ export function getPgDb(): PgDb {
   const url = getDatabaseUrl();
   if (!url) {
     throw new Error(
-      "Postgres requested but DATABASE_URL / POSTGRES_URL is not set.",
+      "Postgres requested but no URL found (DATABASE_URL / POSTGRES_URL / STORAGE_POSTGRES_URL).",
     );
   }
   pgSql = postgres(url, {
