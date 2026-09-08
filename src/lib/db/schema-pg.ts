@@ -86,6 +86,10 @@ export const games = pgTable(
     status: gameStatusEnum("status").notNull(),
     guessesJson: jsonb("guesses_json").notNull().$type<number[]>().default([]),
     resultsJson: jsonb("results_json").notNull().$type<unknown[]>().default([]),
+    score: integer("score"),
+    grade: text("grade"),
+    efficiency: integer("efficiency"),
+    accuracy: integer("accuracy"),
     completedAt: timestamp("completed_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()

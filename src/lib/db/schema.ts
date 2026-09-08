@@ -67,6 +67,10 @@ export const games = sqliteTable(
     status: text("status").notNull(),
     guessesJson: text("guesses_json").notNull().default("[]"),
     resultsJson: text("results_json").notNull().default("[]"),
+    score: integer("score"),
+    grade: text("grade"),
+    efficiency: integer("efficiency"),
+    accuracy: integer("accuracy"),
     completedAt: text("completed_at"),
     createdAt: text("created_at")
       .notNull()
