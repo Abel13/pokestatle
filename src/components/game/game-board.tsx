@@ -105,6 +105,13 @@ export function GameBoard() {
       if (!state || !challenge || state.status !== "PLAYING" || submitting) {
         return;
       }
+      
+      // Additional check: prevent submitting if max guesses reached
+      if (state.guesses.length >= MAX_GUESSES) {
+        setError("No guesses remaining.");
+        return;
+      }
+      
       setSubmitting(true);
       setError(null);
       try {

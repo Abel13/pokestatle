@@ -26,9 +26,80 @@ export async function POST(request: Request) {
     const challenge = await getOrCreateTodayChallenge(date);
     const previous = body.previousGuesses ?? [];
 
-    if (previous.length >= MAX_GUESSES) {
+    // Verify against server state for authenticated users
+    let serverGuessCount = 0;
+    let serverStatus = "PLAYING";
+    try {
+      const supabase = await createClient();
+      if (supabase) {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        
+        if (user) {
+          const { usePostgres, getPgDb, getSqliteDb, pgSchema, schema } = await import("@/lib/db");
+          const { and, eq } = await import("drizzle-orm");
+          
+          if (usePostgres()) {
+            const db = getPgDb();
+            const games = await db
+              .select()
+              .from(pgSchema.games)
+              .where(
+                and(
+                  eq(pgSchema.games.userId, user.id),
+                  eq(pgSchema.games.challengeId, challenge.id),
+                ),
+              )
+              .limit(1);
+            
+            if (games.length > 0) {
+              const game = games[0];
+              serverStatus = game.status;
+              const guesses = Array.isArray(game.guessesJson) 
+                ? game.guessesJson 
+                : JSON.parse(String(game.guessesJson || "[]"));
+              serverGuessCount = guesses.length;
+            }
+          } else {
+            const db = getSqliteDb();
+            const games = db
+              .select()
+              .from(schema.games)
+              .where(
+                and(
+                  eq(schema.games.userId, user.id),
+                  eq(schema.games.challengeId, challenge.id),
+                ),
+              )
+              .limit(1)
+              .all();
+            
+            if (games.length > 0) {
+              const game = games[0];
+              serverStatus = game.status;
+              serverGuessCount = JSON.parse(game.guessesJson).length;
+            }
+          }
+        }
+      }
+    } catch {
+      // Continue with frontend validation if server check fails
+    }
+
+    // Use the maximum of server count and frontend count for validation
+    const actualGuessCount = Math.max(serverGuessCount, previous.length);
+
+    if (actualGuessCount >= MAX_GUESSES) {
       return NextResponse.json(
         { error: "No guesses remaining." },
+        { status: 400 },
+      );
+    }
+
+    if (serverStatus !== "PLAYING") {
+      return NextResponse.json(
+        { error: "Game already completed." },
         { status: 400 },
       );
     }
