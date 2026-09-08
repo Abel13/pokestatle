@@ -82,12 +82,17 @@ async function main() {
     "supabase/migrations/20260101000001_profile_trigger.sql",
   );
 
+  const isLocal =
+    url.includes("127.0.0.1") ||
+    url.includes("localhost") ||
+    url.includes("@db:");
+
   const sql = postgres(url, {
     prepare: false,
     max: 1,
     idle_timeout: 20,
     connect_timeout: 30,
-    ssl: "require",
+    ssl: isLocal ? false : "require",
   });
 
   console.log("[db:push] Applying schema migrations...");
