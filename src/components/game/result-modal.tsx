@@ -33,7 +33,8 @@ export function ResultModal({
   revealed?: { id: number; name: string; sprite: string };
 }) {
   const [copied, setCopied] = useState(false);
-  const share = formatShareText(challengeId, results, won, MAX_GUESSES);
+  const siteUrl = typeof window !== "undefined" ? window.location.origin : "";
+  const share = formatShareText(challengeId, results, won, MAX_GUESSES, siteUrl);
   const resultScore = calculateResultScore(results, won, MAX_GUESSES);
 
   async function copyToClipboard() {
@@ -52,6 +53,7 @@ export function ResultModal({
         await navigator.share({
           title: `PokéStatle #${challengeId}`,
           text: share,
+          url: siteUrl,
         });
         return;
       } catch (err) {
