@@ -27,7 +27,15 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const dateParam = searchParams.get("date");
     const date = dateParam || getChallengeDate();
-    const challenge = await getOrCreateTodayChallenge(date);
+    
+    // For historical dates, just look up the game without creating challenge
+    let challenge;
+    try {
+      challenge = await getOrCreateTodayChallenge(date);
+    } catch (error) {
+      console.error("[me/today-game] Error creating/fetching challenge:", error);
+      return NextResponse.json({ game: null });
+    }
 
     if (usePostgres()) {
       const db = getPgDb();
