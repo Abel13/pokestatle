@@ -35,6 +35,7 @@ export function formatShareText(
   results: GuessResult[],
   won: boolean,
   maxGuesses: number,
+  siteUrl?: string,
 ): string {
   const attempts = won ? `${results.length}/${maxGuesses}` : `X/${maxGuesses}`;
   const grade = formatScoreLine(calculateResultScore(results, won, maxGuesses));
@@ -54,5 +55,11 @@ export function formatShareText(
     ].join("");
   });
 
-  return [`PokéStatle #${challengeId}`, ...lines, attempts, grade].join("\n");
+  const textParts = [`PokéStatle #${challengeId}`, ...lines, attempts, grade];
+  
+  if (siteUrl) {
+    textParts.push("", siteUrl);
+  }
+
+  return textParts.join("\n");
 }
