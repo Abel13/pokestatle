@@ -1,46 +1,33 @@
 import type { AttributeResult, GuessResult, MatchStatus } from "./types";
 
-/** First emoji in every slot: proximity. */
-function proximityEmoji(status: MatchStatus): string {
-  switch (status) {
-    case "EXACT":
-      return "🟩";
-    case "VERY_CLOSE":
-      return "🟨";
-    case "CLOSE":
-      return "🟧";
-    default:
-      return "⬛";
-  }
-}
-
-/** Second emoji in every slot: direction (✅ when exact / N/A). */
-function directionEmoji(direction: AttributeResult["direction"]): string {
-  if (direction === "UP") return "⬆️";
-  if (direction === "DOWN") return "⬇️";
-  return "✅";
-}
-
-/** Always: [proximity][direction] */
+/**
+ * Unified feedback glyph:
+ * - Far → direction only (⬆️ / ⬇️)
+ * - Close / exact → color only (🟧 / 🟨 / 🟩)
+ */
 function slotEmoji(
-  proximity: MatchStatus,
+  status: MatchStatus,
   direction: AttributeResult["direction"],
 ): string {
-  return `${proximityEmoji(proximity)}${directionEmoji(direction)}`;
+  if (status === "FAR") {
+    if (direction === "UP") return "⬆️";
+    if (direction === "DOWN") return "⬇️";
+    return "⬛";
+  }
+  if (status === "EXACT") return "🟩";
+  if (status === "VERY_CLOSE") return "🟨";
+  return "🟧";
 }
 
 function typesSlot(types: GuessResult["attributes"]["types"]): string {
-  let proximity: MatchStatus = "FAR";
-  if (types.length > 0 && types.every((t) => t.match)) proximity = "EXACT";
-  else if (types.some((t) => t.match)) proximity = "VERY_CLOSE";
-  // Types have no direction — always "-" as the second glyph.
-  return `${proximityEmoji(proximity)}➖`;
+  if (types.length > 0 && types.every((t) => t.match)) return "🟩";
+  if (types.some((t) => t.match)) return "🟨";
+  return "⬛";
 }
 
 /**
- * Fixed layout per guess — each attribute is always two emojis:
- * 1) proximity  2) direction
- * Gen · Types · Ht · Wt · HP · Atk · Def · SpA · SpD · Spe
+ * One emoji per attribute (Gen · Types · Ht · Wt · HP · Atk · Def · SpA · SpD · Spe).
+ * Far = direction; close/exact = color.
  */
 export function formatShareText(
   challengeId: number,

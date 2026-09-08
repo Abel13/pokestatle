@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ArrowDown, ArrowUp, Minus } from "lucide-react";
+import { ArrowDown, ArrowUp } from "lucide-react";
 import type { AttributeResult } from "@/lib/game/types";
 import { cn } from "@/lib/utils";
 
@@ -19,6 +19,11 @@ export function statusClass(status: AttributeResult["status"]) {
   return statusStyles[status];
 }
 
+/** Far → direction only. Close / exact → color only (no arrow). */
+export function showsDirection(status: AttributeResult["status"]) {
+  return status === "FAR";
+}
+
 export function DirectionIcon({
   direction,
   className,
@@ -29,7 +34,7 @@ export function DirectionIcon({
   if (direction === "UP") return <ArrowUp className={cn("size-3", className)} />;
   if (direction === "DOWN")
     return <ArrowDown className={cn("size-3", className)} />;
-  return <Minus className={cn("size-3", className)} />;
+  return null;
 }
 
 export function StatChip({
@@ -43,6 +48,8 @@ export function StatChip({
   display?: string | number;
   delay?: number;
 }) {
+  const showDirection = showsDirection(result.status);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 6, scale: 0.94 }}
@@ -59,7 +66,9 @@ export function StatChip({
       </span>
       <span className="flex items-center gap-0.5 text-[11px] leading-none font-semibold tabular-nums sm:text-xs">
         {display ?? result.guessValue}
-        <DirectionIcon direction={result.direction} />
+        {showDirection ? (
+          <DirectionIcon direction={result.direction} />
+        ) : null}
       </span>
     </motion.div>
   );

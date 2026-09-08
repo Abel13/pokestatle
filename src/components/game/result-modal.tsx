@@ -119,9 +119,9 @@ export function ResultModal({
             </pre>
 
             <p className="max-w-[20rem] text-[11px] leading-snug text-muted-foreground sm:max-w-none sm:text-xs">
-              🟩 exact · 🟨 ≤10% · 🟧 ≤25% · ⬛ far
+              Close → color: 🟩 exact · 🟨 ≤10% · 🟧 ≤25%
               <br />
-              ⬆️ higher · ⬇️ lower · ✅ exact · types ➖
+              Far → direction: ⬆️ higher · ⬇️ lower · ⬛ types miss
             </p>
           </div>
 
