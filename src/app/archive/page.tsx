@@ -92,8 +92,8 @@ export default function ArchivePage() {
 
   const handleChallengeClick = (challenge: ChallengeDay) => {
     if (challenge.played && challenge.results) {
-      setSelectedChallenge(challenge);
-      setModalOpen(true);
+      // Navigate to game page to view full game history
+      window.location.href = `/?date=${challenge.date}`;
     }
   };
 

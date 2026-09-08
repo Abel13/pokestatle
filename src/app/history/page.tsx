@@ -66,7 +66,8 @@ export default function HistoryPage() {
         {items.map((item) => (
           <li
             key={item.challengeId}
-            className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/70 bg-background/70 px-4 py-3"
+            className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/70 bg-background/70 px-4 py-3 cursor-pointer hover:border-teal-500/50 hover:bg-teal-500/5 transition-colors"
+            onClick={() => window.location.href = `/?date=${item.date}`}
           >
             <div>
               <p className="font-medium">
