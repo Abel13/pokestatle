@@ -472,17 +472,21 @@ export async function getTodayLeaderboard(challengeId: number, limit = 20) {
       .where(eq(pgSchema.games.challengeId, challengeId));
 
     return rows
-      .filter((r) => r.status === "WON")
+      .filter((r) => r.status === "WON" || r.status === "LOST")
       .map((r) => ({
         userId: r.userId,
         displayName: r.displayName || "Trainer",
         avatarUrl: r.avatarUrl,
+        status: r.status,
         guesses: parseJsonArray<number>(r.guessesJson).length,
         completedAt: asIso(r.completedAt),
         currentStreak: r.currentStreak ?? 0,
         maxStreak: r.maxStreak ?? 0,
       }))
       .sort((a, b) => {
+        if (a.status !== b.status) {
+          return a.status === "WON" ? -1 : 1;
+        }
         if (a.guesses !== b.guesses) return a.guesses - b.guesses;
         return (a.completedAt || "").localeCompare(b.completedAt || "");
       })
@@ -506,17 +510,21 @@ export async function getTodayLeaderboard(challengeId: number, limit = 20) {
     .leftJoin(schema.userStats, eq(schema.games.userId, schema.userStats.userId))
     .where(eq(schema.games.challengeId, challengeId))
     .all()
-    .filter((r) => r.status === "WON")
+    .filter((r) => r.status === "WON" || r.status === "LOST")
     .map((r) => ({
       userId: r.userId,
       displayName: r.displayName || "Trainer",
       avatarUrl: r.avatarUrl,
+      status: r.status,
       guesses: (JSON.parse(r.guessesJson) as number[]).length,
       completedAt: r.completedAt,
       currentStreak: r.currentStreak ?? 0,
       maxStreak: r.maxStreak ?? 0,
     }))
     .sort((a, b) => {
+      if (a.status !== b.status) {
+        return a.status === "WON" ? -1 : 1;
+      }
       if (a.guesses !== b.guesses) return a.guesses - b.guesses;
       return (a.completedAt || "").localeCompare(b.completedAt || "");
     })

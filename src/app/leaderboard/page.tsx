@@ -1,14 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Trophy } from "lucide-react";
+import { Trophy, X } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
 
 type Entry = {
   userId: string;
   displayName: string;
   avatarUrl: string | null;
+  status: string;
   guesses: number;
   completedAt: string | null;
   currentStreak: number;
@@ -48,7 +50,7 @@ export default function LeaderboardPage() {
           Today&apos;s ranking
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Fewer guesses win. Ties broken by completion time.
+          Winners ranked by fewest guesses. Ties broken by completion time. Players who didn't solve it are shown below.
           {meta ? ` Challenge #${meta.challengeId} · ${meta.date}` : null}
         </p>
       </div>
@@ -81,14 +83,22 @@ export default function LeaderboardPage() {
               </AvatarFallback>
             </Avatar>
             <div className="min-w-0 flex-1">
-              <p className="truncate font-medium">{entry.displayName}</p>
+              <div className="flex items-center gap-2">
+                <p className="truncate font-medium">{entry.displayName}</p>
+                {entry.status === "LOST" ? (
+                  <Badge variant="destructive" className="flex items-center gap-1 text-xs">
+                    <X className="size-3" />
+                    Lost
+                  </Badge>
+                ) : null}
+              </div>
               <p className="text-xs text-muted-foreground">
                 Streak {entry.currentStreak} · Best {entry.maxStreak}
               </p>
             </div>
             <div className="text-right">
               <p className="font-heading text-lg font-semibold tabular-nums">
-                {entry.guesses}/6
+                {entry.status === "LOST" ? "X" : entry.guesses}/6
               </p>
             </div>
           </li>
