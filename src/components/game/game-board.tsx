@@ -43,9 +43,32 @@ export function GameBoard() {
         if (!res.ok) throw new Error(data.error || "Failed to load challenge");
         if (cancelled) return;
         setChallenge(data);
-        const saved = loadGameState(data.date);
+
+        // Try to load from server first (for logged-in users)
+        let serverGame: GameState | null = null;
+        try {
+          const gameRes = await fetch("/api/me/today-game");
+          const gameData = await gameRes.json();
+          if (gameData.game) {
+            serverGame = {
+              challengeId: gameData.game.challengeId,
+              date: data.date,
+              guesses: gameData.game.guesses,
+              results: gameData.game.results,
+              status: gameData.game.status,
+              completedAt: gameData.game.completedAt,
+            };
+          }
+        } catch {
+          // Not logged in or server error, continue with localStorage
+        }
+
+        // Use server state if available, otherwise fallback to localStorage
+        const saved = serverGame || loadGameState(data.date);
+        
         if (saved && saved.challengeId === data.id) {
           setState(saved);
+          saveGameState(saved); // Sync server state to localStorage
           if (saved.status !== "PLAYING") setModalOpen(true);
         } else {
           const fresh: GameState = {
