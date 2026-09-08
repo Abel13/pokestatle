@@ -78,10 +78,16 @@ export function GameBoard() {
         // Use server state if available, otherwise fallback to localStorage
         const saved = serverGame || loadGameState(data.date);
         
-        if (saved && saved.challengeId === data.id) {
-          setState(saved);
-          saveGameState(saved); // Sync server state to localStorage
-          if (saved.status !== "PLAYING") setModalOpen(true);
+        if (saved && saved.date === data.date) {
+          // Update challengeId if it changed (keep guesses/results)
+          const updated: GameState = {
+            ...saved,
+            challengeId: data.id,
+            date: data.date,
+          };
+          setState(updated);
+          saveGameState(updated); // Sync server state to localStorage
+          if (updated.status !== "PLAYING") setModalOpen(true);
         } else {
           const fresh: GameState = {
             challengeId: data.id,
