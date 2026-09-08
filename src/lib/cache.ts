@@ -53,5 +53,5 @@ export const todayChallengeCache = new MemoryCache<{
 
 export const pokemonPoolCache = new MemoryCache<{
   id: number;
-  difficulty: string;
+  difficulty: "EASY" | "NORMAL" | "HARD" | "EXPERT";
 }[]>();

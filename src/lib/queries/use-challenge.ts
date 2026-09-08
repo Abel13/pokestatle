@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import type { GuessResult, GameStatus } from "@/lib/game/types";
 
 interface ChallengeData {
   id: number;
@@ -13,25 +14,9 @@ interface ChallengeData {
 interface GameData {
   game: {
     challengeId: number;
-    status: string;
+    status: GameStatus;
     guesses: number[];
-    results: Array<{
-      typeMatch: string;
-      generationMatch: string;
-      heightMatch: string;
-      weightMatch: string;
-      hpMatch: string;
-      attackMatch: string;
-      defenseMatch: string;
-      specialAttackMatch: string;
-      specialDefenseMatch: string;
-      speedMatch: string;
-      bstMatch: string;
-      isLegendaryMatch: boolean;
-      isMythicalMatch: boolean;
-      evolvesFromMatch: string;
-      evolutionStageMatch: string;
-    }>;
+    results: GuessResult[];
     completedAt?: string;
   } | null;
 }
