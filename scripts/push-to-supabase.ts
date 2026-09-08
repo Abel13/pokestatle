@@ -1,18 +1,17 @@
 /**
- * Apply Supabase schema + seed Pokémon catalog from local SQLite seed.
+ * Apply Supabase schema + seed Pokémon catalog.
  *
- * Env (any of): DATABASE_URL, POSTGRES_URL, STORAGE_POSTGRES_URL, …
- * Runs automatically during `pnpm build` on Vercel when a Postgres URL is present.
+ * Prefers data/pokemon.seed.json (no native deps) so Vercel builds stay reliable.
+ * Env: DATABASE_URL | POSTGRES_URL | STORAGE_POSTGRES_URL | …
  *
  *   pnpm db:push-supabase
- *   FORCE_DB_PUSH=1 pnpm db:push-supabase   # re-seed even if catalog looks full
+ *   FORCE_DB_PUSH=1 pnpm db:push-supabase
  */
 import "dotenv/config";
 import fs from "fs";
 import path from "path";
-import Database from "better-sqlite3";
 import postgres from "postgres";
-import { getDatabaseUrl, SEED_PATH, DB_PATH } from "../src/lib/db";
+import { getDatabaseUrl } from "../src/lib/db";
 
 type PokemonSeedRow = {
   id: number;
@@ -28,14 +27,33 @@ type PokemonSeedRow = {
   special_defense: number;
   speed: number;
   base_stat_total: number;
-  is_legendary: number;
-  is_mythical: number;
+  is_legendary: number | boolean;
+  is_mythical: number | boolean;
   evolves_from: number | null;
   evolution_stage: number;
   sprite: string;
   difficulty: string;
-  types_json: string;
+  types_json: string | string[];
 };
+
+function loadSeedRows(): PokemonSeedRow[] {
+  const jsonPath = path.join(process.cwd(), "data/pokemon.seed.json");
+  if (fs.existsSync(jsonPath)) {
+    return JSON.parse(fs.readFileSync(jsonPath, "utf8")) as PokemonSeedRow[];
+  }
+  throw new Error(
+    "Missing data/pokemon.seed.json — regenerate with local SQLite export.",
+  );
+}
+
+function parseTypes(value: string | string[]): string[] {
+  if (Array.isArray(value)) return value;
+  try {
+    return JSON.parse(value) as string[];
+  } catch {
+    return [];
+  }
+}
 
 async function main() {
   const url = getDatabaseUrl();
@@ -69,6 +87,7 @@ async function main() {
     max: 1,
     idle_timeout: 20,
     connect_timeout: 30,
+    ssl: "require",
   });
 
   console.log("[db:push] Applying schema migrations...");
@@ -77,22 +96,7 @@ async function main() {
     await sql.unsafe(fs.readFileSync(triggerPath, "utf8"));
   }
 
-  const localPath = fs.existsSync(SEED_PATH)
-    ? SEED_PATH
-    : fs.existsSync(DB_PATH)
-      ? DB_PATH
-      : null;
-  if (!localPath) {
-    console.error("[db:push] No local seed DB found. Run pnpm sync:pokemon first.");
-    await sql.end();
-    process.exit(1);
-  }
-
-  const sqlite = new Database(localPath, { readonly: true });
-  const rows = sqlite
-    .prepare("SELECT * FROM pokemon ORDER BY id")
-    .all() as PokemonSeedRow[];
-
+  const rows = loadSeedRows();
   const existing = await sql`select count(*)::int as n from public.pokemon`;
   const existingCount = existing[0]?.n ?? 0;
 
@@ -100,27 +104,18 @@ async function main() {
     console.log(
       `[db:push] Catalog already has ${existingCount} rows — skipping seed (set FORCE_DB_PUSH=1 to refresh).`,
     );
-    sqlite.close();
     await sql.end();
     return;
   }
 
-  console.log(
-    `[db:push] Seeding ${rows.length} Pokémon from ${path.basename(localPath)}...`,
-  );
+  console.log(`[db:push] Seeding ${rows.length} Pokémon from pokemon.seed.json...`);
 
-  const chunkSize = 50;
+  const chunkSize = 40;
   for (let i = 0; i < rows.length; i += chunkSize) {
     const chunk = rows.slice(i, i + chunkSize);
     await Promise.all(
       chunk.map(async (row) => {
-        let types: string[] = [];
-        try {
-          types = JSON.parse(row.types_json) as string[];
-        } catch {
-          types = [];
-        }
-
+        const types = parseTypes(row.types_json);
         await sql`
           insert into public.pokemon (
             id, name, slug, generation, height, weight,
@@ -161,7 +156,6 @@ async function main() {
 
   const count = await sql`select count(*)::int as n from public.pokemon`;
   console.log(`[db:push] Done. public.pokemon rows = ${count[0]?.n ?? 0}`);
-  sqlite.close();
   await sql.end();
 }
 

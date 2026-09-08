@@ -1,5 +1,5 @@
 -- PokéStatle initial schema for Supabase Postgres
--- Mirror of the local SQLite schema used by the Next.js app runtime.
+-- Idempotent — safe to re-run on every Vercel build.
 
 create extension if not exists "pgcrypto";
 
@@ -79,28 +79,31 @@ alter table public.profiles enable row level security;
 alter table public.games enable row level security;
 alter table public.user_stats enable row level security;
 
--- Public read of pokemon catalog
+drop policy if exists "pokemon_read" on public.pokemon;
 create policy "pokemon_read" on public.pokemon for select using (true);
 
--- Challenge metadata readable, but pokemon_id should be queried only via service role in production APIs.
--- For defense in depth, deny client select of daily_challenges; Route Handlers use service role.
+drop policy if exists "challenges_no_client_read" on public.daily_challenges;
 create policy "challenges_no_client_read" on public.daily_challenges
   for select using (false);
 
+drop policy if exists "profiles_read_own" on public.profiles;
 create policy "profiles_read_own" on public.profiles
   for select using (auth.uid() = id);
+drop policy if exists "profiles_update_own" on public.profiles;
 create policy "profiles_update_own" on public.profiles
   for update using (auth.uid() = id);
+drop policy if exists "profiles_insert_own" on public.profiles;
 create policy "profiles_insert_own" on public.profiles
   for insert with check (auth.uid() = id);
 
+drop policy if exists "games_own" on public.games;
 create policy "games_own" on public.games
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
+drop policy if exists "stats_own" on public.user_stats;
 create policy "stats_own" on public.user_stats
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
--- Leaderboard: allow reading completed games' aggregate-friendly columns via a view without secret pokemon
 create or replace view public.leaderboard_today with (security_invoker = true) as
 select
   g.challenge_id,

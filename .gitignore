@@ -39,6 +39,7 @@ yarn-error.log*
 /data/*.db-*
 !/data/.gitkeep
 !/data/pokestatle.seed.db
+!/data/pokemon.seed.json
 
 # vercel
 .vercel
