@@ -5,6 +5,7 @@ import {
   isEligibleSlug,
   titleCaseName,
 } from "../src/lib/pokemon/difficulty";
+import { convertGitHubUrlToJsDelivr } from "../src/lib/pokemon/sprite-url";
 
 const API = "https://pokeapi.co/api/v2";
 const CONCURRENCY = 8;
@@ -184,10 +185,11 @@ async function main() {
         baseStatTotal,
         evolutionStage: stage,
       });
-      const sprite =
+      const sprite = convertGitHubUrlToJsDelivr(
         pokemon.sprites.other?.["official-artwork"]?.front_default ||
         pokemon.sprites.front_default ||
-        "";
+        ""
+      );
       const types = pokemon.types
         .sort((a, b) => a.slot - b.slot)
         .map((t) => t.type.name);

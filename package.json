@@ -11,7 +11,8 @@
     "db:ensure": "tsx -e \"import { getSqliteDb } from './src/lib/db'; getSqliteDb(); console.log('SQLite ready');\"",
     "db:push-supabase": "tsx scripts/push-to-supabase.ts",
     "challenge:today": "tsx scripts/materialize-today.ts",
-    "challenge:backfill": "tsx scripts/backfill-challenges.ts"
+    "challenge:backfill": "tsx scripts/backfill-challenges.ts",
+    "sprite:migrate": "tsx scripts/migrate-sprite-urls.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",

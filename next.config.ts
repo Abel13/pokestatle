@@ -30,6 +30,12 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: "https",
+        hostname: "cdn.jsdelivr.net",
+        pathname: "/gh/PokeAPI/sprites/**",
+      },
+      // Keep GitHub for backward compatibility during migration
+      {
+        protocol: "https",
         hostname: "raw.githubusercontent.com",
         pathname: "/PokeAPI/**",
       },
