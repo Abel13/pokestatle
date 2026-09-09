@@ -62,6 +62,8 @@ SQL migrations live in `supabase/migrations/`.
 - `pnpm challenge:today` — materialize today's challenge row
 - `pnpm challenge:backfill` — create missing daily challenges from epoch → today
 - `pnpm sprite:migrate` — convert stored GitHub sprite URLs to jsDelivr (also runs automatically in `db:push-supabase` on deploy)
+- Production one-shot (same secret as Vercel Cron):
+  `curl -H "Authorization: Bearer $CRON_SECRET" https://pokestatle.vercel.app/api/cron/migrate-sprites`
 - `pnpm build` / `pnpm start` — production (`build` seeds Postgres when a URL is set)
 
 ## Buy me a coffee
