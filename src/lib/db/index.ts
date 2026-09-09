@@ -174,7 +174,8 @@ export function getPgDb(): PgDb {
     prepare: false,
     max: isServerless ? 1 : 5,
     idle_timeout: 20,
-    connect_timeout: 30,
+    // Fail fast on cold/unreachable DB instead of hanging the request (~30s).
+    connect_timeout: isServerless ? 5 : 10,
   });
   pgCached = drizzlePg(pgSql, { schema: pgSchema });
   return pgCached;

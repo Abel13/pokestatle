@@ -14,12 +14,12 @@ export class MemoryCache<T> {
   get(key: string): T | null {
     const entry = this.cache.get(key);
     if (!entry) return null;
-    
+
     if (Date.now() > entry.expires) {
       this.cache.delete(key);
       return null;
     }
-    
+
     return entry.data;
   }
 
@@ -43,15 +43,23 @@ export class MemoryCache<T> {
   }
 }
 
-// Global cache instances
-export const todayChallengeCache = new MemoryCache<{
+/** Cached today-challenge payload (public fields only). */
+export type TodayChallengeCached = {
   id: number;
   date: string;
-  pokemonId: number;
   difficulty: string;
-}>();
+  pokemonPoolSize: number;
+  pokemonId?: number;
+};
 
-export const pokemonPoolCache = new MemoryCache<{
-  id: number;
-  difficulty: "EASY" | "NORMAL" | "HARD" | "EXPERT";
-}[]>();
+// Global cache instances
+export const todayChallengeCache = new MemoryCache<TodayChallengeCached>();
+
+export const pokemonPoolCache = new MemoryCache<
+  {
+    id: number;
+    difficulty: "EASY" | "NORMAL" | "HARD" | "EXPERT";
+  }[]
+>();
+
+export const poolSizeCache = new MemoryCache<number>();

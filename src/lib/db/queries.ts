@@ -14,7 +14,7 @@ import {
   pickDailyPokemonId,
 } from "@/lib/game/daily";
 import type { Difficulty, PokemonRecord } from "@/lib/game/types";
-import { pokemonPoolCache } from "@/lib/cache";
+import { pokemonPoolCache, poolSizeCache } from "@/lib/cache";
 
 function parseTypes(value: unknown): string[] {
   if (Array.isArray(value)) return value as string[];
@@ -289,11 +289,26 @@ export async function getOrCreateTodayChallenge(date = getChallengeDate()) {
 }
 
 export async function getPoolSize(): Promise<number> {
+  const CACHE_KEY = "pool-size";
+  const CACHE_TTL = 60 * 60 * 1000; // 1 hour — pool rarely changes
+
+  const cached = poolSizeCache.get(CACHE_KEY);
+  if (cached !== null) return cached;
+
+  let count: number;
   if (usePostgres()) {
     const result = await getPgDb()
       .select({ count: sql<number>`count(*)::int` })
       .from(pgSchema.pokemon);
-    return result[0]?.count || 0;
+    count = result[0]?.count || 0;
+  } else {
+    const result = getSqliteDb()
+      .select({ count: sql<number>`count(*)` })
+      .from(schema.pokemon)
+      .get();
+    count = Number(result?.count ?? 0);
   }
-  return getSqliteDb().select().from(schema.pokemon).all().length;
+
+  poolSizeCache.set(CACHE_KEY, count, CACHE_TTL);
+  return count;
 }
