@@ -15,7 +15,7 @@ import {
 } from "@/lib/game/daily";
 import type { Difficulty, PokemonRecord } from "@/lib/game/types";
 import { pokemonPoolCache, poolSizeCache } from "@/lib/cache";
-import { convertGitHubUrlToJsDelivr } from "@/lib/pokemon/sprite-url";
+import { resolveSpriteUrl } from "@/lib/pokemon/sprite-url";
 
 function parseTypes(value: unknown): string[] {
   if (Array.isArray(value)) return value as string[];
@@ -69,7 +69,7 @@ function mapPokemon(row: {
     isMythical: Boolean(row.isMythical),
     evolvesFrom: row.evolvesFrom,
     evolutionStage: row.evolutionStage,
-    sprite: convertGitHubUrlToJsDelivr(row.sprite),
+    sprite: resolveSpriteUrl(row.id, row.sprite),
     difficulty: row.difficulty as Difficulty,
     types: parseTypes(row.typesJson),
   };
@@ -249,7 +249,7 @@ export async function searchPokemon(query: string, limit = 12) {
     return rows.map((p) => ({
       id: p.id,
       name: p.name,
-      sprite: convertGitHubUrlToJsDelivr(p.sprite),
+      sprite: resolveSpriteUrl(p.id, p.sprite),
       types: parseTypes(p.typesJson),
     }));
   }
@@ -265,7 +265,7 @@ export async function searchPokemon(query: string, limit = 12) {
   return rows.map((p) => ({
     id: p.id,
     name: p.name,
-    sprite: convertGitHubUrlToJsDelivr(p.sprite),
+    sprite: resolveSpriteUrl(p.id, p.sprite),
     types: parseTypes(p.typesJson),
   }));
 }

@@ -28,10 +28,11 @@ const nextConfig: NextConfig = {
   },
   images: {
     remotePatterns: [
+      // Path includes `sprites@master` (no slash before @) — `/sprites/**` does NOT match.
       {
         protocol: "https",
         hostname: "cdn.jsdelivr.net",
-        pathname: "/gh/PokeAPI/sprites/**",
+        pathname: "/gh/PokeAPI/**",
       },
       // Keep GitHub for backward compatibility during migration
       {

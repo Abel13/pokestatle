@@ -12,29 +12,40 @@ import fs from "fs";
 import path from "path";
 import postgres from "postgres";
 import { getDatabaseUrl } from "../src/lib/db";
-import { convertGitHubUrlToJsDelivr } from "../src/lib/pokemon/sprite-url";
-
-const GITHUB_SPRITE_PREFIX =
-  "https://raw.githubusercontent.com/PokeAPI/sprites/master";
-const JSDELIVR_SPRITE_PREFIX =
-  "https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master";
+import {
+  convertGitHubUrlToJsDelivr,
+  SPRITE_URL_PREFIXES,
+} from "../src/lib/pokemon/sprite-url";
 
 async function migrateSpriteUrls(
   sql: postgres.Sql,
-): Promise<{ updated: number; remaining: number }> {
-  const result = await sql`
+): Promise<{ updated: number; repairedEmpty: number; remainingGithub: number }> {
+  const updated = await sql`
     update public.pokemon
-    set sprite = replace(sprite, ${GITHUB_SPRITE_PREFIX}, ${JSDELIVR_SPRITE_PREFIX})
-    where sprite like ${GITHUB_SPRITE_PREFIX + "%"}
+    set sprite = replace(
+      sprite,
+      ${SPRITE_URL_PREFIXES.github},
+      ${SPRITE_URL_PREFIXES.jsdelivr}
+    )
+    where sprite like ${SPRITE_URL_PREFIXES.github + "%"}
+  `;
+  const repaired = await sql`
+    update public.pokemon
+    set sprite = ${SPRITE_URL_PREFIXES.jsdelivr}
+      || '/sprites/pokemon/other/official-artwork/'
+      || id::text
+      || '.png'
+    where sprite is null or sprite = ''
   `;
   const remaining = await sql`
     select count(*)::int as n
     from public.pokemon
-    where sprite like ${GITHUB_SPRITE_PREFIX + "%"}
+    where sprite like ${SPRITE_URL_PREFIXES.github + "%"}
   `;
   return {
-    updated: result.count,
-    remaining: remaining[0]?.n ?? 0,
+    updated: updated.count,
+    repairedEmpty: repaired.count,
+    remainingGithub: remaining[0]?.n ?? 0,
   };
 }
 
@@ -187,7 +198,7 @@ async function main() {
   console.log("[db:push] Migrating sprite URLs to jsDelivr CDN...");
   const migration = await migrateSpriteUrls(sql);
   console.log(
-    `[db:push] Sprite migration: updated=${migration.updated} remaining_github=${migration.remaining}`,
+    `[db:push] Sprite migration: updated=${migration.updated} repaired_empty=${migration.repairedEmpty} remaining_github=${migration.remainingGithub}`,
   );
 
   const count = await sql`select count(*)::int as n from public.pokemon`;
