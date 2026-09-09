@@ -10,7 +10,8 @@
     "sync:pokemon": "tsx scripts/sync-pokemon.ts",
     "db:ensure": "tsx -e \"import { getSqliteDb } from './src/lib/db'; getSqliteDb(); console.log('SQLite ready');\"",
     "db:push-supabase": "tsx scripts/push-to-supabase.ts",
-    "challenge:today": "tsx scripts/materialize-today.ts"
+    "challenge:today": "tsx scripts/materialize-today.ts",
+    "challenge:backfill": "tsx scripts/backfill-challenges.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",
