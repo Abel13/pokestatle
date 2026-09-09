@@ -33,6 +33,7 @@ export function ResultModal({
   revealed?: { id: number; name: string; sprite: string };
 }) {
   const [copied, setCopied] = useState(false);
+  const [imageError, setImageError] = useState(false);
   const siteUrl = typeof window !== "undefined" ? window.location.origin : "";
   const share = formatShareText(challengeId, results, won, MAX_GUESSES, siteUrl);
   const resultScore = calculateResultScore(results, won, MAX_GUESSES);
@@ -128,7 +129,7 @@ export function ResultModal({
                 transition={{ type: "spring", stiffness: 280, damping: 20 }}
                 className="flex shrink-0 flex-col items-center gap-1"
               >
-                {revealed.sprite ? (
+                {revealed.sprite && !imageError ? (
                   <Image
                     src={revealed.sprite}
                     alt={revealed.name}
@@ -136,8 +137,13 @@ export function ResultModal({
                     height={128}
                     className="size-28 object-contain sm:size-32"
                     unoptimized
+                    onError={() => setImageError(true)}
                   />
-                ) : null}
+                ) : (
+                  <div className="flex size-28 items-center justify-center rounded-2xl bg-muted/70 text-4xl font-semibold text-muted-foreground sm:size-32">
+                    ?
+                  </div>
+                )}
                 <p className="font-heading text-xl font-semibold tracking-tight sm:text-2xl">
                   {revealed.name}
                 </p>

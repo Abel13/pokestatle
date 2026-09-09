@@ -27,6 +27,7 @@ export function PokemonSearch({
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [active, setActive] = useState(0);
+  const [imageErrors, setImageErrors] = useState<Set<number>>(new Set());
   const listId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -132,17 +133,20 @@ export function PokemonSearch({
                 onMouseEnter={() => setActive(index)}
                 onClick={() => choose(item)}
               >
-                {item.sprite ? (
+                {item.sprite && !imageErrors.has(item.id) ? (
                   <Image
                     src={item.sprite}
-                    alt=""
+                    alt={item.name}
                     width={32}
                     height={32}
                     className="size-8 object-contain"
                     unoptimized
+                    onError={() => setImageErrors(prev => new Set(prev).add(item.id))}
                   />
                 ) : (
-                  <span className="size-8 rounded bg-muted" />
+                  <span className="flex size-8 items-center justify-center rounded bg-muted text-xs text-muted-foreground">
+                    ?
+                  </span>
                 )}
                 <span className="font-medium">{item.name}</span>
                 <span className="ml-auto text-[11px] capitalize text-muted-foreground">

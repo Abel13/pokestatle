@@ -7,6 +7,7 @@ import { StatChip } from "@/components/game/stat-chip";
 import { TypeIcon } from "@/components/game/type-icon";
 import type { GuessResult } from "@/lib/game/types";
 import { cn } from "@/lib/utils";
+import { useState } from "react";
 
 function formatHeight(dm: number) {
   return (dm / 10).toFixed(1);
@@ -24,6 +25,7 @@ function GuessCard({
 }) {
   const a = result.attributes;
   const base = Math.min(index, 4) * 0.03;
+  const [imageError, setImageError] = useState(false);
 
   return (
     <motion.article
@@ -38,16 +40,21 @@ function GuessCard({
     >
       <div className="mb-2.5 flex items-center gap-2.5">
         <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-muted/60 sm:size-12">
-          {result.sprite ? (
+          {result.sprite && !imageError ? (
             <Image
               src={result.sprite}
-              alt=""
+              alt={result.name}
               width={44}
               height={44}
               className="size-10 object-contain sm:size-11"
               unoptimized
+              onError={() => setImageError(true)}
             />
-          ) : null}
+          ) : (
+            <div className="flex size-10 items-center justify-center text-xs font-medium text-muted-foreground sm:size-11">
+              ?
+            </div>
+          )}
         </div>
 
         <div className="min-w-0 flex-1">
