@@ -1,7 +1,11 @@
 import { unstable_cache } from "next/cache";
 import { NextResponse } from "next/server";
-import { getChallenge, getPoolSize } from "@/lib/db/queries";
-import { assertNotFuture } from "@/lib/game/daily";
+import {
+  getChallenge,
+  getOrCreateTodayChallenge,
+  getPoolSize,
+} from "@/lib/db/queries";
+import { assertNotFuture, getChallengeDate } from "@/lib/game/daily";
 import { MAX_GUESSES } from "@/lib/game/types";
 
 export const runtime = "nodejs";
@@ -44,7 +48,23 @@ export async function GET(
 
     assertNotFuture(date);
 
-    const challenge = await loadChallengeByDate(date);
+    let challenge = await loadChallengeByDate(date);
+
+    // Home fetches by BRT date; materialize today if cron missed (bypass cached miss).
+    if (!challenge && date === getChallengeDate()) {
+      const row = await getOrCreateTodayChallenge(date);
+      const pokemonPoolSize = await getPoolSize();
+      challenge = {
+        id: row.id,
+        date: row.date,
+        maxGuesses: MAX_GUESSES,
+        pokemonPoolSize,
+        difficulty: row.difficulty,
+      };
+      return NextResponse.json(challenge, {
+        headers: { "Cache-Control": "no-store" },
+      });
+    }
 
     if (!challenge) {
       return NextResponse.json(

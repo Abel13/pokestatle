@@ -1,11 +1,18 @@
 import { createHash } from "crypto";
 import type { Difficulty } from "./types";
+import {
+  challengeIdFromDate,
+  getChallengeDate,
+} from "./challenge-calendar";
 
-/** Challenge calendar uses America/Sao_Paulo so the daily reset matches Brazil. */
-export const CHALLENGE_TIMEZONE = "America/Sao_Paulo";
-
-/** Day 1 of PokéStatle numbering. */
-export const EPOCH_DATE = "2026-01-01";
+export {
+  CHALLENGE_TIMEZONE,
+  EPOCH_DATE,
+  addChallengeDays,
+  challengeIdFromDate,
+  getChallengeDate,
+  parseDateOnly,
+} from "./challenge-calendar";
 
 const DIFFICULTY_CYCLE: Difficulty[] = [
   "EASY",
@@ -16,27 +23,6 @@ const DIFFICULTY_CYCLE: Difficulty[] = [
   "HARD",
   "EXPERT",
 ];
-
-export function getChallengeDate(now = new Date()): string {
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone: CHALLENGE_TIMEZONE,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(now);
-}
-
-export function parseDateOnly(date: string): Date {
-  const [y, m, d] = date.split("-").map(Number);
-  return new Date(Date.UTC(y, m - 1, d));
-}
-
-export function challengeIdFromDate(date: string): number {
-  const epoch = parseDateOnly(EPOCH_DATE).getTime();
-  const current = parseDateOnly(date).getTime();
-  const days = Math.floor((current - epoch) / 86_400_000) + 1;
-  return Math.max(1, days);
-}
 
 export function hashSeed(input: string): number {
   const digest = createHash("sha256").update(input).digest();
