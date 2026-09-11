@@ -20,12 +20,12 @@ export function compareAttribute(
   } else if (useAbsolute) {
     // For discrete/categorical attributes (like generation)
     // use absolute difference instead of percentage
-    if (difference <= 2) {
-      status = "VERY_CLOSE"; // Off by 1-2
-    } else if (difference <= 4) {
-      status = "CLOSE"; // Off by 3-4
+    if (difference === 1) {
+      status = "VERY_CLOSE"; // Off by 1
+    } else if (difference === 2) {
+      status = "CLOSE"; // Off by 2
     } else {
-      status = "FAR"; // Off by 5+
+      status = "FAR"; // Off by 3+
     }
   } else {
     // For continuous attributes, use percentage
