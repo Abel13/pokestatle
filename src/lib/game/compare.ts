@@ -10,19 +10,33 @@ import type {
 export function compareAttribute(
   guess: number,
   target: number,
+  useAbsolute = false,
 ): AttributeResult {
   const difference = Math.abs(guess - target);
-  const percentage = target === 0 ? (difference === 0 ? 0 : 1) : difference / target;
-
+  
   let status: MatchStatus;
   if (guess === target) {
     status = "EXACT";
-  } else if (percentage <= 0.1) {
-    status = "VERY_CLOSE";
-  } else if (percentage <= 0.25) {
-    status = "CLOSE";
+  } else if (useAbsolute) {
+    // For discrete/categorical attributes (like generation)
+    // use absolute difference instead of percentage
+    if (difference === 1) {
+      status = "VERY_CLOSE"; // Off by 1
+    } else if (difference === 2) {
+      status = "CLOSE"; // Off by 2
+    } else {
+      status = "FAR"; // Off by 3+
+    }
   } else {
-    status = "FAR";
+    // For continuous attributes, use percentage
+    const percentage = target === 0 ? (difference === 0 ? 0 : 1) : difference / target;
+    if (percentage <= 0.1) {
+      status = "VERY_CLOSE";
+    } else if (percentage <= 0.25) {
+      status = "CLOSE";
+    } else {
+      status = "FAR";
+    }
   }
 
   let direction: AttributeResult["direction"] = null;
@@ -48,7 +62,7 @@ export function comparePokemon(
   target: PokemonRecord,
 ): GuessResult {
   const attributes: GuessAttributes = {
-    generation: compareAttribute(guess.generation, target.generation),
+    generation: compareAttribute(guess.generation, target.generation, true), // Use absolute for generation
     types: compareTypes(guess.types, target.types),
     height: compareAttribute(guess.height, target.height),
     weight: compareAttribute(guess.weight, target.weight),
