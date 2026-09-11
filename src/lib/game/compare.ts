@@ -7,41 +7,46 @@ import type {
   TypeResult,
 } from "./types";
 
+type StatusThreshold = { max: number; status: MatchStatus };
+
+const ABSOLUTE_THRESHOLDS: StatusThreshold[] = [
+  { max: 1, status: "VERY_CLOSE" }, // Off by 1
+  { max: 2, status: "CLOSE" },      // Off by 2
+  { max: Infinity, status: "FAR" }, // Off by 3+
+];
+
+const PERCENTAGE_THRESHOLDS: StatusThreshold[] = [
+  { max: 0.1, status: "VERY_CLOSE" },  // ≤10%
+  { max: 0.25, status: "CLOSE" },      // ≤25%
+  { max: Infinity, status: "FAR" },    // >25%
+];
+
+function getStatusFromThresholds(
+  value: number,
+  thresholds: StatusThreshold[],
+): MatchStatus {
+  return thresholds.find((t) => value <= t.max)!.status;
+}
+
 export function compareAttribute(
   guess: number,
   target: number,
   useAbsolute = false,
 ): AttributeResult {
   const difference = Math.abs(guess - target);
-  
-  let status: MatchStatus;
-  if (guess === target) {
-    status = "EXACT";
-  } else if (useAbsolute) {
-    // For discrete/categorical attributes (like generation)
-    // use absolute difference instead of percentage
-    if (difference === 1) {
-      status = "VERY_CLOSE"; // Off by 1
-    } else if (difference === 2) {
-      status = "CLOSE"; // Off by 2
-    } else {
-      status = "FAR"; // Off by 3+
-    }
-  } else {
-    // For continuous attributes, use percentage
-    const percentage = target === 0 ? (difference === 0 ? 0 : 1) : difference / target;
-    if (percentage <= 0.1) {
-      status = "VERY_CLOSE";
-    } else if (percentage <= 0.25) {
-      status = "CLOSE";
-    } else {
-      status = "FAR";
-    }
-  }
 
-  let direction: AttributeResult["direction"] = null;
-  if (guess < target) direction = "UP";
-  if (guess > target) direction = "DOWN";
+  const status: MatchStatus =
+    guess === target
+      ? "EXACT"
+      : useAbsolute
+        ? getStatusFromThresholds(difference, ABSOLUTE_THRESHOLDS)
+        : getStatusFromThresholds(
+            target === 0 ? (difference === 0 ? 0 : 1) : difference / target,
+            PERCENTAGE_THRESHOLDS,
+          );
+
+  const direction: AttributeResult["direction"] =
+    guess < target ? "UP" : guess > target ? "DOWN" : null;
 
   return { status, direction, guessValue: guess };
 }
