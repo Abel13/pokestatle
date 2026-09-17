@@ -7,8 +7,20 @@ import { EvolutionHintMark } from "@/components/game/hint-icons";
 import { MatchMark } from "@/components/game/match-mark";
 import { StatChip } from "@/components/game/stat-chip";
 import { TypeIcon } from "@/components/game/type-icon";
+import {
+  Popover,
+  PopoverContent,
+  PopoverHeader,
+  PopoverTitle,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { evolutionHintLabel } from "@/lib/game/hints";
-import type { ColorResult, EvolutionResult, GuessResult } from "@/lib/game/types";
+import type {
+  ColorResult,
+  EvolutionResult,
+  GuessResult,
+  TypeResult,
+} from "@/lib/game/types";
 import { cn } from "@/lib/utils";
 import { useState, type ReactNode } from "react";
 
@@ -41,6 +53,104 @@ function HeaderHintGroup({ children }: { children: ReactNode }) {
     <div className="flex items-center gap-0.5 rounded-md bg-muted/40 px-1 py-0.5 ring-1 ring-border/60">
       {children}
     </div>
+  );
+}
+
+function HintExplain({
+  title,
+  label,
+  details,
+  children,
+}: {
+  title: string;
+  label: string;
+  details: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <Popover>
+      <PopoverTrigger
+        aria-label={label}
+        className="cursor-pointer rounded-md bg-transparent p-0 outline-none focus-visible:ring-2 focus-visible:ring-teal-500/40"
+      >
+        {children}
+      </PopoverTrigger>
+      <PopoverContent
+        align="end"
+        side="top"
+        sideOffset={8}
+        className="w-52 max-w-[calc(100vw-1.5rem)] gap-1.5 bg-background p-3 shadow-lg ring-1 ring-border"
+      >
+        <PopoverHeader>
+          <PopoverTitle className="font-heading text-sm tracking-tight">
+            {title}
+          </PopoverTitle>
+        </PopoverHeader>
+        {details}
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+function TypesHintDetails({ types }: { types: TypeResult[] }) {
+  return (
+    <ul className="space-y-1.5">
+      {types.map((entry) => (
+        <li key={entry.type} className="flex items-center gap-2 text-xs">
+          <TypeIcon type={entry.type} matched={entry.match} />
+          <span className="capitalize">{entry.type}</span>
+          <span
+            className={
+              entry.match
+                ? "ml-auto text-emerald-700 dark:text-emerald-300"
+                : "ml-auto text-muted-foreground"
+            }
+          >
+            {entry.match ? "Match" : "No match"}
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function EvolutionHintDetails({ evolution }: { evolution: EvolutionResult }) {
+  const label = evolutionHintLabel(evolution.stage, evolution.lineLength);
+  return (
+    <div className="flex items-start gap-2 text-xs leading-snug text-muted-foreground">
+      <EvolutionGuessMark evolution={evolution} />
+      <p>
+        {label}.{" "}
+        {evolution.match
+          ? "Same stage and line as today's Pokémon."
+          : "Different stage or line from today's Pokémon."}
+      </p>
+    </div>
+  );
+}
+
+function ColorsHintDetails({ colors }: { colors: ColorResult[] }) {
+  return (
+    <ul className="space-y-1.5">
+      {colors.map((swatch, index) => (
+        <li
+          key={`${swatch.color}-${index}`}
+          className="flex items-center gap-2 text-xs"
+        >
+          <ColorGuessChip color={swatch.color} match={swatch.match} />
+          <span className="font-mono tabular-nums">{swatch.color}</span>
+          <span
+            className={
+              swatch.match
+                ? "ml-auto text-emerald-700 dark:text-emerald-300"
+                : "ml-auto text-muted-foreground"
+            }
+          >
+            {swatch.match ? "Match" : "No match"}
+          </span>
+        </li>
+      ))}
+    </ul>
   );
 }
 
@@ -101,27 +211,45 @@ function GuessCard({
           ) : null}
           <div className="ml-auto flex shrink-0 items-center gap-1.5">
             {a.types.length > 0 ? (
-              <HeaderHintGroup>
-                {a.types.map((t) => (
-                  <TypeIcon key={t.type} type={t.type} matched={t.match} />
-                ))}
-              </HeaderHintGroup>
+              <HintExplain
+                title="Types"
+                label="Types: tap for details"
+                details={<TypesHintDetails types={a.types} />}
+              >
+                <HeaderHintGroup>
+                  {a.types.map((t) => (
+                    <TypeIcon key={t.type} type={t.type} matched={t.match} />
+                  ))}
+                </HeaderHintGroup>
+              </HintExplain>
             ) : null}
             {a.evolution ? (
-              <HeaderHintGroup>
-                <EvolutionGuessMark evolution={a.evolution} />
-              </HeaderHintGroup>
+              <HintExplain
+                title="Evolution"
+                label="Evolution: tap for details"
+                details={<EvolutionHintDetails evolution={a.evolution} />}
+              >
+                <HeaderHintGroup>
+                  <EvolutionGuessMark evolution={a.evolution} />
+                </HeaderHintGroup>
+              </HintExplain>
             ) : null}
             {a.colors && a.colors.length > 0 ? (
-              <HeaderHintGroup>
-                {a.colors.map((swatch, index) => (
-                  <ColorGuessChip
-                    key={`${swatch.color}-${index}`}
-                    color={swatch.color}
-                    match={swatch.match}
-                  />
-                ))}
-              </HeaderHintGroup>
+              <HintExplain
+                title="Colors"
+                label="Colors: tap for details"
+                details={<ColorsHintDetails colors={a.colors} />}
+              >
+                <HeaderHintGroup>
+                  {a.colors.map((swatch, index) => (
+                    <ColorGuessChip
+                      key={`${swatch.color}-${index}`}
+                      color={swatch.color}
+                      match={swatch.match}
+                    />
+                  ))}
+                </HeaderHintGroup>
+              </HintExplain>
             ) : null}
           </div>
         </div>
