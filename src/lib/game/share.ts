@@ -63,3 +63,9 @@ export function formatShareText(
 
   return textParts.join("\n");
 }
+
+export function formatShareUrl(origin: string, date?: string): string {
+  const base = origin.replace(/\/$/, "");
+  if (!date) return base;
+  return `${base}/?date=${date}`;
+}

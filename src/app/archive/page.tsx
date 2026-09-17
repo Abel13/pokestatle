@@ -194,6 +194,7 @@ export default function ArchivePage() {
           won={selectedChallenge.status === "WON"}
           challengeId={selectedChallenge.id}
           results={selectedChallenge.results}
+          date={selectedChallenge.date}
         />
       )}
     </div>

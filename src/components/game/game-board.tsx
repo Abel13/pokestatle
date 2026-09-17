@@ -302,6 +302,7 @@ export function GameBoard() {
           challengeId={challenge.id}
           results={state.results}
           revealed={state.revealedPokemon}
+          date={challenge.date}
         />
       ) : null}
 

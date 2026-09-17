@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { StatusLegend } from "@/components/game/status-legend";
 import { calculateResultScore } from "@/lib/game/score";
-import { formatShareText } from "@/lib/game/share";
+import { formatShareText, formatShareUrl } from "@/lib/game/share";
 import type { GuessResult } from "@/lib/game/types";
 import { MAX_GUESSES } from "@/lib/game/types";
 
@@ -25,6 +25,7 @@ export function ResultModal({
   challengeId,
   results,
   revealed,
+  date,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -32,10 +33,14 @@ export function ResultModal({
   challengeId: number;
   results: GuessResult[];
   revealed?: { id: number; name: string; sprite: string };
+  date?: string;
 }) {
   const [copied, setCopied] = useState(false);
   const [imageError, setImageError] = useState(false);
-  const siteUrl = typeof window !== "undefined" ? window.location.origin : "";
+  const siteUrl =
+    typeof window !== "undefined"
+      ? formatShareUrl(window.location.origin, date)
+      : "";
   const share = formatShareText(challengeId, results, won, MAX_GUESSES, siteUrl);
   const resultScore = calculateResultScore(results, won, MAX_GUESSES);
 
