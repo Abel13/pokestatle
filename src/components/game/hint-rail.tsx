@@ -39,7 +39,7 @@ function SlotShell({
   return (
     <div
       className={cn(
-        "flex min-h-[5.75rem] flex-col items-center justify-center gap-1.5 rounded-2xl border px-2.5 py-2.5 text-center",
+        "flex min-h-0 flex-col items-center justify-center gap-1 rounded-xl border px-1 py-1.5 text-center sm:min-h-[5.75rem] sm:gap-1.5 sm:rounded-2xl sm:px-2.5 sm:py-2.5",
         unlocked
           ? "border-border/70 bg-background/80"
           : "border-dashed border-border/60 bg-muted/20",
@@ -82,7 +82,7 @@ export function HintRail({
   const fresh = (kind: HintKind) => justUnlocked.includes(kind);
 
   return (
-    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+    <div className="grid grid-cols-4 gap-1 sm:gap-2">
       <SlotShell title={TITLES.generation} unlocked={Boolean(hints?.generation)}>
         {hints?.generation ? (
           <UnlockedBody justUnlocked={fresh("generation")}>
@@ -91,11 +91,14 @@ export function HintRail({
               animate={{ opacity: 1 }}
               transition={{ duration: 0.35, ease: "easeOut" }}
             >
-              <GenerationHintMark roman={hints.generation.roman} />
+              <GenerationHintMark
+                roman={hints.generation.roman}
+                className="size-7 sm:size-9"
+              />
             </motion.div>
-            <p className="font-heading text-xs font-medium tracking-tight sm:text-sm">
+            <p className="font-heading text-[11px] font-medium tracking-tight sm:text-sm">
               Gen {hints.generation.roman}
-              <span className="text-muted-foreground">
+              <span className="hidden text-muted-foreground sm:inline">
                 {" "}
                 · {hints.generation.region}
               </span>
@@ -109,7 +112,7 @@ export function HintRail({
       <SlotShell title={TITLES.types} unlocked={Boolean(hints?.types)}>
         {hints?.types ? (
           <UnlockedBody justUnlocked={fresh("types")}>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-0.5 sm:gap-1">
               {hints.types.map((type, i) => (
                 <motion.div
                   key={type}
@@ -117,11 +120,11 @@ export function HintRail({
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ ...spring, delay: i * 0.06 }}
                 >
-                  <TypeIcon type={type} />
+                  <TypeIcon type={type} className="size-5 sm:size-6" />
                 </motion.div>
               ))}
             </div>
-            <p className="text-[11px] capitalize text-muted-foreground">
+            <p className="hidden text-[11px] capitalize text-muted-foreground sm:block">
               {hints.types.join(" / ")}
             </p>
           </UnlockedBody>
@@ -140,8 +143,9 @@ export function HintRail({
               stage={hints.evolution.stage}
               lineLength={hints.evolution.lineLength}
               animate={fresh("evolution")}
+              className="size-7 sm:size-9"
             />
-            <p className="max-w-[9.5rem] text-[11px] leading-snug text-muted-foreground">
+            <p className="hidden max-w-[9.5rem] text-[11px] leading-snug text-muted-foreground sm:block">
               {hints.evolution.label}
             </p>
           </UnlockedBody>
@@ -161,10 +165,11 @@ export function HintRail({
               <ColorHintMark
                 primary={hints.colors.primary}
                 secondary={hints.colors.secondary}
+                className="size-7 sm:size-9"
               />
             </motion.div>
             <p
-              className="text-[11px] text-muted-foreground"
+              className="hidden text-[11px] text-muted-foreground sm:block"
               aria-label={`${hints.colors.primary} and ${hints.colors.secondary}`}
             >
               Main palette
@@ -180,10 +185,11 @@ export function HintRail({
 
 function LockedSlot({ kind }: { kind: HintKind }) {
   return (
-    <div className="flex flex-col items-center gap-1">
-      <LockedHintMark />
-      <p className="text-[11px] text-muted-foreground">
-        Guess {UNLOCK_ROUND[kind]}
+    <div className="flex flex-col items-center gap-0.5 sm:gap-1">
+      <LockedHintMark className="size-7 sm:size-9" />
+      <p className="text-[9px] text-muted-foreground sm:text-[11px]">
+        <span className="sm:hidden">{UNLOCK_ROUND[kind]}</span>
+        <span className="hidden sm:inline">Guess {UNLOCK_ROUND[kind]}</span>
       </p>
     </div>
   );

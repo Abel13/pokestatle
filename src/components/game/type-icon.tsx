@@ -213,7 +213,7 @@ export function TypeIcon({
 }) {
   const key = type.toLowerCase();
   const Icon = icons[key] ?? icons.normal!;
-  const mark = Icon({ className: "size-6", title: type });
+  const mark = Icon({ className: cn("size-6", className), title: type });
 
   if (matched === undefined) {
     return (
