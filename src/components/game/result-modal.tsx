@@ -12,6 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { StatusLegend } from "@/components/game/status-legend";
 import { calculateResultScore } from "@/lib/game/score";
 import { formatShareText } from "@/lib/game/share";
 import type { GuessResult } from "@/lib/game/types";
@@ -154,11 +155,7 @@ export function ResultModal({
               {share}
             </pre>
 
-            <p className="max-w-[20rem] text-[11px] leading-snug text-muted-foreground sm:max-w-none sm:text-xs">
-              Close → color: 🟩 exact · 🟨 ≤10% · 🟧 ≤25%
-              <br />
-              Far → direction: ⬆️ higher · ⬇️ lower · ⬛ types miss
-            </p>
+            <StatusLegend className="max-w-[20rem] sm:max-w-none" />
           </div>
 
           <Button

@@ -27,6 +27,11 @@ export const STAT_LABELS: Record<StatKind, string> = {
   speed: "Speed",
 };
 
+export const STAT_UNITS: Partial<Record<StatKind, string>> = {
+  height: "m",
+  weight: "kg",
+};
+
 function IconFrame({
   title,
   className,

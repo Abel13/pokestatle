@@ -27,8 +27,9 @@ function typesSlot(types: GuessResult["attributes"]["types"]): string {
 }
 
 /**
- * One emoji per attribute (Gen · Types · Ht · Wt · HP · Atk · Def · SpA · SpD · Spe).
- * Far = direction; close/exact = color.
+ * One emoji per attribute (Types · Ht · Wt · HP · Atk · Def · SpA · SpD · Spe).
+ * Far = direction; close/exact = color. Generation is omitted because the
+ * daily search is already limited to that generation.
  */
 export function formatShareText(
   challengeId: number,
@@ -42,7 +43,6 @@ export function formatShareText(
   const lines = results.map((r) => {
     const a = r.attributes;
     return [
-      slotEmoji(a.generation.status, a.generation.direction),
       typesSlot(a.types),
       slotEmoji(a.height.status, a.height.direction),
       slotEmoji(a.weight.status, a.weight.direction),

@@ -9,6 +9,7 @@ import { GuessCards } from "@/components/game/guess-cards";
 import { HintRail } from "@/components/game/hint-rail";
 import { PokemonSearch } from "@/components/game/pokemon-search";
 import { ResultModal } from "@/components/game/result-modal";
+import { StatusLegend } from "@/components/game/status-legend";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { GameState, GuessResult } from "@/lib/game/types";
@@ -288,7 +289,10 @@ export function GameBoard() {
         ) : null}
       </div>
 
-      <GuessCards results={state?.results ?? []} />
+      <div className="space-y-2">
+        <GuessCards results={state?.results ?? []} />
+        <StatusLegend />
+      </div>
 
       {state && challenge ? (
         <ResultModal

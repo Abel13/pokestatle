@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { ArrowDown, ArrowUp } from "lucide-react";
-import { StatIcon, STAT_LABELS, type StatKind } from "@/components/game/stat-icons";
+import { StatIcon, STAT_LABELS, STAT_UNITS, type StatKind } from "@/components/game/stat-icons";
 import type { AttributeResult } from "@/lib/game/types";
 import { cn } from "@/lib/utils";
 
@@ -51,7 +51,9 @@ export function StatChip({
 }) {
   const showDirection = showsDirection(result.status);
   const label = STAT_LABELS[stat];
+  const unit = STAT_UNITS[stat];
   const value = display ?? result.guessValue;
+  const caption = unit ? `${label}: ${value} ${unit}` : `${label}: ${value}`;
 
   return (
     <motion.div
@@ -62,8 +64,8 @@ export function StatChip({
         "grid min-w-0 grid-cols-[auto_1fr] items-center gap-x-1 rounded-lg px-1 py-1 ring-1 sm:gap-x-2 sm:px-2 sm:py-1.5",
         statusClass(result.status),
       )}
-      title={`${label}: ${value}`}
-      aria-label={`${label}: ${value}`}
+      title={caption}
+      aria-label={caption}
     >
       <span className="flex flex-col items-center gap-0.5">
         <StatIcon kind={stat} className="size-4 opacity-90 sm:size-[1.125rem]" />
@@ -71,8 +73,13 @@ export function StatChip({
           {label}
         </span>
       </span>
-      <span className="flex min-w-0 items-center justify-end gap-0.5 text-xs font-semibold tabular-nums sm:text-sm">
-        <span className="truncate">{value}</span>
+      <span className="flex min-w-0 items-center justify-end gap-px whitespace-nowrap text-xs font-semibold tabular-nums sm:gap-0.5 sm:text-sm">
+        {value}
+        {unit ? (
+          <span className="text-[9px] font-medium opacity-70 sm:text-[10px]">
+            {unit}
+          </span>
+        ) : null}
         {showDirection ? (
           <DirectionIcon direction={result.direction} className="size-3" />
         ) : null}
