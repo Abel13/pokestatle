@@ -162,9 +162,6 @@ export function PokemonSearch({
                   </span>
                 )}
                 <span className="font-medium">{item.name}</span>
-                <span className="ml-auto text-[11px] capitalize text-muted-foreground">
-                  {item.types.join(" / ")}
-                </span>
               </button>
             </li>
           ))}
