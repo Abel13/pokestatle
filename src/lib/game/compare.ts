@@ -1,5 +1,7 @@
 import type {
   AttributeResult,
+  ColorResult,
+  EvolutionResult,
   GuessAttributes,
   GuessResult,
   MatchStatus,
@@ -62,6 +64,63 @@ export function compareTypes(
   }));
 }
 
+export function compareEvolution(
+  guess: PokemonRecord,
+  target: PokemonRecord,
+): EvolutionResult {
+  return {
+    stage: guess.evolutionStage,
+    lineLength: guess.evolutionLineLength,
+    match:
+      guess.evolutionStage === target.evolutionStage &&
+      guess.evolutionLineLength === target.evolutionLineLength,
+  };
+}
+
+function parseHex(hex: string): { r: number; g: number; b: number } | null {
+  const raw = hex.trim().replace(/^#/, "");
+  if (!/^[\da-f]{6}$/i.test(raw)) return null;
+  return {
+    r: Number.parseInt(raw.slice(0, 2), 16),
+    g: Number.parseInt(raw.slice(2, 4), 16),
+    b: Number.parseInt(raw.slice(4, 6), 16),
+  };
+}
+
+/** Quantized artwork colors sit on a 24-step grid; nearby buckets still count. */
+const COLOR_MATCH_DISTANCE = 36;
+
+function isColorClose(a: string, b: string): boolean {
+  if (a.toLowerCase() === b.toLowerCase()) return true;
+  const left = parseHex(a);
+  const right = parseHex(b);
+  if (!left || !right) return false;
+  const dr = left.r - right.r;
+  const dg = left.g - right.g;
+  const db = left.b - right.b;
+  return Math.sqrt(dr * dr + dg * dg + db * db) <= COLOR_MATCH_DISTANCE;
+}
+
+export function compareColors(
+  guessPrimary: string | null,
+  guessSecondary: string | null,
+  targetPrimary: string | null,
+  targetSecondary: string | null,
+): ColorResult[] {
+  const guess = [guessPrimary, guessSecondary].filter(
+    (color, index, list): color is string =>
+      Boolean(color) && list.indexOf(color) === index,
+  );
+  const target = [targetPrimary, targetSecondary].filter(
+    (color): color is string => Boolean(color),
+  );
+
+  return guess.map((color) => ({
+    color,
+    match: target.some((candidate) => isColorClose(color, candidate)),
+  }));
+}
+
 export function comparePokemon(
   guess: PokemonRecord,
   target: PokemonRecord,
@@ -69,6 +128,13 @@ export function comparePokemon(
   const attributes: GuessAttributes = {
     generation: compareAttribute(guess.generation, target.generation, true), // Use absolute for generation
     types: compareTypes(guess.types, target.types),
+    evolution: compareEvolution(guess, target),
+    colors: compareColors(
+      guess.primaryColor,
+      guess.secondaryColor,
+      target.primaryColor,
+      target.secondaryColor,
+    ),
     height: compareAttribute(guess.height, target.height),
     weight: compareAttribute(guess.weight, target.weight),
     hp: compareAttribute(guess.hp, target.hp),

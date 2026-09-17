@@ -3,11 +3,46 @@
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { Check } from "lucide-react";
+import { EvolutionHintMark } from "@/components/game/hint-icons";
+import { MatchMark } from "@/components/game/match-mark";
 import { StatChip } from "@/components/game/stat-chip";
 import { TypeIcon } from "@/components/game/type-icon";
-import type { GuessResult } from "@/lib/game/types";
+import { evolutionHintLabel } from "@/lib/game/hints";
+import type { ColorResult, EvolutionResult, GuessResult } from "@/lib/game/types";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
+
+function EvolutionGuessMark({ evolution }: { evolution: EvolutionResult }) {
+  const label = evolutionHintLabel(evolution.stage, evolution.lineLength);
+  return (
+    <MatchMark matched={evolution.match} label={label}>
+      <EvolutionHintMark
+        stage={evolution.stage}
+        lineLength={evolution.lineLength}
+        className="size-6"
+      />
+    </MatchMark>
+  );
+}
+
+function ColorGuessChip({ color, match }: ColorResult) {
+  return (
+    <MatchMark matched={match} label={color}>
+      <span
+        className="size-6 rounded-full ring-1 ring-border/80"
+        style={{ backgroundColor: color }}
+      />
+    </MatchMark>
+  );
+}
+
+function HeaderHintGroup({ children }: { children: ReactNode }) {
+  return (
+    <div className="flex items-center gap-0.5 rounded-md bg-muted/40 px-1 py-0.5 ring-1 ring-border/60">
+      {children}
+    </div>
+  );
+}
 
 function formatHeight(dm: number) {
   return (dm / 10).toFixed(1);
@@ -64,10 +99,30 @@ function GuessCard({
           {result.isCorrect ? (
             <Check className="size-3.5 shrink-0 text-emerald-600 dark:text-emerald-300" />
           ) : null}
-          <div className="ml-auto flex shrink-0 items-center gap-1">
-            {a.types.map((t) => (
-              <TypeIcon key={t.type} type={t.type} matched={t.match} />
-            ))}
+          <div className="ml-auto flex shrink-0 items-center gap-1.5">
+            {a.types.length > 0 ? (
+              <HeaderHintGroup>
+                {a.types.map((t) => (
+                  <TypeIcon key={t.type} type={t.type} matched={t.match} />
+                ))}
+              </HeaderHintGroup>
+            ) : null}
+            {a.evolution ? (
+              <HeaderHintGroup>
+                <EvolutionGuessMark evolution={a.evolution} />
+              </HeaderHintGroup>
+            ) : null}
+            {a.colors && a.colors.length > 0 ? (
+              <HeaderHintGroup>
+                {a.colors.map((swatch, index) => (
+                  <ColorGuessChip
+                    key={`${swatch.color}-${index}`}
+                    color={swatch.color}
+                    match={swatch.match}
+                  />
+                ))}
+              </HeaderHintGroup>
+            ) : null}
           </div>
         </div>
       </div>

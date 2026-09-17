@@ -14,6 +14,17 @@ export interface TypeResult {
   match: boolean;
 }
 
+export interface EvolutionResult {
+  stage: number;
+  lineLength: number;
+  match: boolean;
+}
+
+export interface ColorResult {
+  color: string;
+  match: boolean;
+}
+
 export interface PokemonRecord {
   id: number;
   name: string;
@@ -43,6 +54,8 @@ export interface PokemonRecord {
 export interface GuessAttributes {
   generation: AttributeResult;
   types: TypeResult[];
+  evolution?: EvolutionResult;
+  colors?: ColorResult[];
   height: AttributeResult;
   weight: AttributeResult;
   hp: AttributeResult;

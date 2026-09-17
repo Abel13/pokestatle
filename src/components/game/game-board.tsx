@@ -141,6 +141,8 @@ export function GameBoard() {
           attributes: data.result.attributes ?? {
             generation: data.result.generation,
             types: data.result.types,
+            evolution: data.result.evolution,
+            colors: data.result.colors,
             height: data.result.height,
             weight: data.result.weight,
             hp: data.result.hp,

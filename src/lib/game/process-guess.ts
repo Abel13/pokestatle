@@ -33,6 +33,8 @@ export type ProcessGuessResult = {
     attributes: ReturnType<typeof comparePokemon>["attributes"];
     generation: ReturnType<typeof comparePokemon>["attributes"]["generation"];
     types: ReturnType<typeof comparePokemon>["attributes"]["types"];
+    evolution: ReturnType<typeof comparePokemon>["attributes"]["evolution"];
+    colors: ReturnType<typeof comparePokemon>["attributes"]["colors"];
     height: ReturnType<typeof comparePokemon>["attributes"]["height"];
     weight: ReturnType<typeof comparePokemon>["attributes"]["weight"];
     hp: ReturnType<typeof comparePokemon>["attributes"]["hp"];

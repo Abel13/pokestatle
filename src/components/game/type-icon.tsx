@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { MatchMark } from "@/components/game/match-mark";
 import { cn } from "@/lib/utils";
 
 export const TYPE_COLORS: Record<string, string> = {
@@ -212,24 +213,19 @@ export function TypeIcon({
 }) {
   const key = type.toLowerCase();
   const Icon = icons[key] ?? icons.normal!;
+  const mark = Icon({ className: "size-6", title: type });
+
+  if (matched === undefined) {
+    return (
+      <span className={cn("relative inline-flex", className)} title={type}>
+        {mark}
+      </span>
+    );
+  }
+
   return (
-    <span
-      className={cn(
-        "relative inline-flex",
-        matched === false && "opacity-45 grayscale",
-        className,
-      )}
-      title={matched === false ? `${type} (no match)` : matched ? `${type} (match)` : type}
-    >
-      {Icon({ className: "size-6", title: type })}
-      {matched === true ? (
-        <span className="absolute -right-0.5 -bottom-0.5 size-2.5 rounded-full bg-emerald-500 ring-2 ring-background" />
-      ) : null}
-      {matched === false ? (
-        <span className="absolute inset-0 flex items-center justify-center">
-          <span className="h-0.5 w-5 rotate-[-28deg] rounded-full bg-background/90 shadow" />
-        </span>
-      ) : null}
-    </span>
+    <MatchMark matched={matched} label={type} className={className}>
+      {mark}
+    </MatchMark>
   );
 }
