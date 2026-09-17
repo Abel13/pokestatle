@@ -1,23 +1,30 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { AlertCircle, LoaderCircle } from "lucide-react";
 import { LogoMark } from "@/components/brand/logo-mark";
 import { GuessCards } from "@/components/game/guess-cards";
+import { HintRail } from "@/components/game/hint-rail";
 import { PokemonSearch } from "@/components/game/pokemon-search";
 import { ResultModal } from "@/components/game/result-modal";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { GameState, GuessResult } from "@/lib/game/types";
 import { MAX_GUESSES } from "@/lib/game/types";
+import type { ChallengeHints, HintKind } from "@/lib/game/hints";
+import { unlockedHintKeys } from "@/lib/game/hints";
 import {
   loadGameState,
   saveGameState,
   updateLocalStatsOnComplete,
 } from "@/lib/storage";
-import { useChallenge, useGameState as useGameStateQuery } from "@/lib/queries/use-challenge";
+import {
+  useChallenge,
+  useChallengeHints,
+  useGameState as useGameStateQuery,
+} from "@/lib/queries/use-challenge";
 
 export function GameBoard() {
   const searchParams = useSearchParams();
@@ -31,6 +38,26 @@ export function GameBoard() {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
+  const [hints, setHints] = useState<ChallengeHints | null>(null);
+  const [justUnlocked, setJustUnlocked] = useState<HintKind[]>([]);
+  const skipHintFetch = useRef(false);
+
+  const { data: fetchedHints } = useChallengeHints(
+    challenge?.date ?? dateParam,
+    state?.guesses.length ?? 0,
+    state?.status ?? "PLAYING",
+    Boolean(challenge && state),
+  );
+
+  useEffect(() => {
+    skipHintFetch.current = false;
+    setJustUnlocked([]);
+  }, [challenge?.date]);
+
+  useEffect(() => {
+    if (!fetchedHints || skipHintFetch.current) return;
+    setHints(fetchedHints);
+  }, [fetchedHints]);
 
   // Sync server/localStorage state when data loads
   useEffect(() => {
@@ -137,6 +164,15 @@ export function GameBoard() {
         setState(next);
         saveGameState(next);
 
+        if (data.hints) {
+          const incoming = data.hints as ChallengeHints;
+          const prevKeys = unlockedHintKeys(hints ?? {});
+          const nextKeys = unlockedHintKeys(incoming);
+          skipHintFetch.current = true;
+          setJustUnlocked(nextKeys.filter((key) => !prevKeys.includes(key)));
+          setHints(incoming);
+        }
+
         if (next.status !== "PLAYING") {
           updateLocalStatsOnComplete({
             challengeId: next.challengeId,
@@ -151,7 +187,7 @@ export function GameBoard() {
         setSubmitting(false);
       }
     },
-    [state, challenge, submitting, dateParam],
+    [state, challenge, submitting, dateParam, hints],
   );
 
   const loading = loadingChallenge || loadingGame;
@@ -223,6 +259,8 @@ export function GameBoard() {
         </div>
       </motion.section>
 
+      <HintRail hints={hints} justUnlocked={justUnlocked} />
+
       <div className="space-y-3">
         <PokemonSearch
           disabled={
@@ -230,6 +268,12 @@ export function GameBoard() {
           }
           excludeIds={state?.guesses ?? []}
           onSelect={onSelect}
+          date={challenge?.date}
+          generationLabel={
+            hints?.generation
+              ? `Gen ${hints.generation.roman} only`
+              : undefined
+          }
         />
         {submitting ? (
           <p className="flex items-center gap-2 text-xs text-muted-foreground">

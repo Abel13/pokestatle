@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { getChallengeDate } from "@/lib/game/challenge-calendar";
 import type { GuessResult, GameStatus } from "@/lib/game/types";
+import type { ChallengeHints } from "@/lib/game/hints";
 
 interface ChallengeData {
   id: number;
@@ -77,6 +78,37 @@ export function useGameState(date?: string | null) {
     },
     staleTime: 0, // Always fetch fresh game state
     gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
+    retry: 1,
+  });
+}
+
+export function useChallengeHints(
+  date?: string | null,
+  guessCount = 0,
+  status: GameStatus = "PLAYING",
+  enabled = true,
+) {
+  const resolvedDate = date || getChallengeDate();
+
+  return useQuery<ChallengeHints>({
+    queryKey: ["hints", resolvedDate, guessCount, status],
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        guessCount: String(guessCount),
+        status,
+      });
+      const res = await fetch(
+        `/api/challenges/${resolvedDate}/hints?${params}`,
+      );
+      if (!res.ok) {
+        const error = await res.json().catch(() => ({}));
+        throw new Error(error.error || "Failed to load hints");
+      }
+      return res.json() as Promise<ChallengeHints>;
+    },
+    enabled: Boolean(resolvedDate) && enabled,
+    staleTime: 0,
+    gcTime: 5 * 60 * 1000,
     retry: 1,
   });
 }

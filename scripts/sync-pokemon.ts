@@ -1,11 +1,15 @@
 import "dotenv/config";
 import { getSqliteDb, schema } from "../src/lib/db";
+import { buildHintFieldUpdates } from "./lib/apply-hint-fields";
 import {
   classifyDifficulty,
   isEligibleSlug,
   titleCaseName,
 } from "../src/lib/pokemon/difficulty";
 import { convertGitHubUrlToJsDelivr } from "../src/lib/pokemon/sprite-url";
+import fs from "fs";
+import path from "path";
+import { eq } from "drizzle-orm";
 
 const API = "https://pokeapi.co/api/v2";
 const CONCURRENCY = 8;
@@ -177,13 +181,13 @@ async function main() {
       const evolvesFrom = species.evolves_from_species
         ? Number(species.evolves_from_species.url.match(/\/(\d+)\/?$/)?.[1])
         : null;
-      const stage = evolvesFrom ? 2 : 1;
+      const difficultyStage = evolvesFrom ? 2 : 1;
       const difficulty = classifyDifficulty({
         generation,
         isLegendary: species.is_legendary,
         isMythical: species.is_mythical,
         baseStatTotal,
-        evolutionStage: stage,
+        evolutionStage: difficultyStage,
       });
       const sprite = convertGitHubUrlToJsDelivr(
         pokemon.sprites.other?.["official-artwork"]?.front_default ||
@@ -212,7 +216,8 @@ async function main() {
           isLegendary: species.is_legendary,
           isMythical: species.is_mythical,
           evolvesFrom,
-          evolutionStage: stage,
+          evolutionStage: difficultyStage,
+          evolutionLineLength: 1,
           sprite,
           difficulty,
           typesJson: JSON.stringify(types),
@@ -235,7 +240,6 @@ async function main() {
             isLegendary: species.is_legendary,
             isMythical: species.is_mythical,
             evolvesFrom,
-            evolutionStage: stage,
             sprite,
             difficulty,
             typesJson: JSON.stringify(types),
@@ -252,6 +256,70 @@ async function main() {
   });
 
   console.log(`Done. Upserted=${upserted} skipped=${skipped}`);
+
+  console.log("Computing evolution lines and artwork colors...");
+  const catalog = db
+    .select({
+      id: schema.pokemon.id,
+      evolvesFrom: schema.pokemon.evolvesFrom,
+      primaryColor: schema.pokemon.primaryColor,
+      secondaryColor: schema.pokemon.secondaryColor,
+    })
+    .from(schema.pokemon)
+    .all();
+  const updates = await buildHintFieldUpdates(catalog, {
+    concurrency: 10,
+    onProgress: (done, total) => {
+      if (done % 50 === 0 || done === total) {
+        console.log(`  colors ${done}/${total}`);
+      }
+    },
+  });
+  for (const u of updates) {
+    db.update(schema.pokemon)
+      .set({
+        evolutionStage: u.evolutionStage,
+        evolutionLineLength: u.evolutionLineLength,
+        primaryColor: u.primaryColor,
+        secondaryColor: u.secondaryColor,
+      })
+      .where(eq(schema.pokemon.id, u.id))
+      .run();
+  }
+
+  const seedRows = db.select().from(schema.pokemon).all();
+  const seedPath = path.join(process.cwd(), "data/pokemon.seed.json");
+  fs.writeFileSync(
+    seedPath,
+    JSON.stringify(
+      seedRows.map((row) => ({
+        id: row.id,
+        name: row.name,
+        slug: row.slug,
+        generation: row.generation,
+        height: row.height,
+        weight: row.weight,
+        hp: row.hp,
+        attack: row.attack,
+        defense: row.defense,
+        special_attack: row.specialAttack,
+        special_defense: row.specialDefense,
+        speed: row.speed,
+        base_stat_total: row.baseStatTotal,
+        is_legendary: row.isLegendary ? 1 : 0,
+        is_mythical: row.isMythical ? 1 : 0,
+        evolves_from: row.evolvesFrom,
+        evolution_stage: row.evolutionStage,
+        evolution_line_length: row.evolutionLineLength,
+        sprite: row.sprite,
+        difficulty: row.difficulty,
+        types_json: row.typesJson,
+        primary_color: row.primaryColor,
+        secondary_color: row.secondaryColor,
+      })),
+    ),
+  );
+  console.log(`Exported ${seedRows.length} rows to ${seedPath}`);
 }
 
 main().catch((err) => {

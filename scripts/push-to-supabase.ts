@@ -67,9 +67,12 @@ type PokemonSeedRow = {
   is_mythical: number | boolean;
   evolves_from: number | null;
   evolution_stage: number;
+  evolution_line_length?: number;
   sprite: string;
   difficulty: string;
   types_json: string | string[];
+  primary_color?: string | null;
+  secondary_color?: string | null;
 };
 
 function loadSeedRows(): PokemonSeedRow[] {
@@ -118,6 +121,11 @@ async function main() {
     "supabase/migrations/20260101000001_profile_trigger.sql",
   );
 
+  const hintMigrationPath = path.join(
+    process.cwd(),
+    "supabase/migrations/20260917150000_pokemon_hint_columns.sql",
+  );
+
   const isLocal =
     url.includes("127.0.0.1") ||
     url.includes("localhost") ||
@@ -137,11 +145,20 @@ async function main() {
     await sql.unsafe(fs.readFileSync(triggerPath, "utf8"));
   }
 
+  if (fs.existsSync(hintMigrationPath)) {
+    await sql.unsafe(fs.readFileSync(hintMigrationPath, "utf8"));
+  }
+
   const rows = loadSeedRows();
   const existing = await sql`select count(*)::int as n from public.pokemon`;
   const existingCount = existing[0]?.n ?? 0;
 
-  if (!force && existingCount >= rows.length) {
+  const missingHint = await sql`
+    select count(*)::int as n from public.pokemon where primary_color is null
+  `;
+  const missingHintCount = missingHint[0]?.n ?? 0;
+
+  if (!force && existingCount >= rows.length && missingHintCount === 0) {
     console.log(
       `[db:push] Catalog already has ${existingCount} rows — skipping seed (set FORCE_DB_PUSH=1 to refresh).`,
     );
@@ -160,12 +177,14 @@ async function main() {
               id, name, slug, generation, height, weight,
               hp, attack, defense, special_attack, special_defense, speed,
               base_stat_total, is_legendary, is_mythical, evolves_from,
-              evolution_stage, sprite, difficulty, types_json
+              evolution_stage, evolution_line_length, sprite, difficulty, types_json,
+              primary_color, secondary_color
             ) values (
               ${row.id}, ${row.name}, ${row.slug}, ${row.generation}, ${row.height}, ${row.weight},
               ${row.hp}, ${row.attack}, ${row.defense}, ${row.special_attack}, ${row.special_defense}, ${row.speed},
               ${row.base_stat_total}, ${Boolean(row.is_legendary)}, ${Boolean(row.is_mythical)}, ${row.evolves_from},
-              ${row.evolution_stage}, ${sprite}, ${row.difficulty}::public.difficulty, ${sql.json(types)}
+              ${row.evolution_stage}, ${row.evolution_line_length ?? 1}, ${sprite}, ${row.difficulty}::public.difficulty, ${sql.json(types)},
+              ${row.primary_color ?? null}, ${row.secondary_color ?? null}
             )
             on conflict (id) do update set
               name = excluded.name,
@@ -184,9 +203,12 @@ async function main() {
               is_mythical = excluded.is_mythical,
               evolves_from = excluded.evolves_from,
               evolution_stage = excluded.evolution_stage,
+              evolution_line_length = excluded.evolution_line_length,
               sprite = excluded.sprite,
               difficulty = excluded.difficulty,
-              types_json = excluded.types_json
+              types_json = excluded.types_json,
+              primary_color = excluded.primary_color,
+              secondary_color = excluded.secondary_color
           `;
         }),
       );

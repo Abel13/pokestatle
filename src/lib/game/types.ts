@@ -32,9 +32,12 @@ export interface PokemonRecord {
   isMythical: boolean;
   evolvesFrom: number | null;
   evolutionStage: number;
+  evolutionLineLength: number;
   sprite: string;
   difficulty: Difficulty;
   types: string[];
+  primaryColor: string | null;
+  secondaryColor: string | null;
 }
 
 export interface GuessAttributes {

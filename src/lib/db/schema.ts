@@ -24,9 +24,12 @@ export const pokemon = sqliteTable("pokemon", {
   isMythical: integer("is_mythical", { mode: "boolean" }).notNull().default(false),
   evolvesFrom: integer("evolves_from"),
   evolutionStage: integer("evolution_stage").notNull().default(1),
+  evolutionLineLength: integer("evolution_line_length").notNull().default(1),
   sprite: text("sprite").notNull(),
   difficulty: text("difficulty").notNull().default("NORMAL"),
   typesJson: text("types_json").notNull().default("[]"),
+  primaryColor: text("primary_color"),
+  secondaryColor: text("secondary_color"),
 });
 
 export const dailyChallenges = sqliteTable(

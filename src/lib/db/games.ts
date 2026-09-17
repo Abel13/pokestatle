@@ -6,7 +6,7 @@ import {
   schema,
   usePostgres,
 } from "@/lib/db";
-import type { GuessResult } from "@/lib/game/types";
+import type { GameStatus, GuessResult } from "@/lib/game/types";
 import { MAX_GUESSES } from "@/lib/game/types";
 import { calculateResultScore } from "@/lib/game/score";
 
@@ -380,6 +380,44 @@ async function updateStatsOnComplete(input: {
       },
     })
     .run();
+}
+
+export async function getUserGameProgress(
+  userId: string,
+  challengeId: number,
+): Promise<{ guessCount: number; status: GameStatus } | null> {
+  if (usePostgres()) {
+    const rows = await getPgDb()
+      .select()
+      .from(pgSchema.games)
+      .where(
+        and(
+          eq(pgSchema.games.userId, userId),
+          eq(pgSchema.games.challengeId, challengeId),
+        ),
+      )
+      .limit(1);
+    const game = rows[0];
+    if (!game) return null;
+    const guesses = parseJsonArray<number>(game.guessesJson);
+    return { guessCount: guesses.length, status: game.status as GameStatus };
+  }
+
+  const game = getSqliteDb()
+    .select()
+    .from(schema.games)
+    .where(
+      and(
+        eq(schema.games.userId, userId),
+        eq(schema.games.challengeId, challengeId),
+      ),
+    )
+    .get();
+  if (!game) return null;
+  return {
+    guessCount: parseJsonArray<number>(game.guessesJson).length,
+    status: game.status as GameStatus,
+  };
 }
 
 export async function getUserStats(userId: string) {

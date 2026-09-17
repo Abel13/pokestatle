@@ -17,10 +17,14 @@ export function PokemonSearch({
   disabled,
   excludeIds,
   onSelect,
+  date,
+  generationLabel,
 }: {
   disabled?: boolean;
   excludeIds: number[];
   onSelect: (pokemon: SearchItem) => void;
+  date?: string;
+  generationLabel?: string;
 }) {
   const [query, setQuery] = useState("");
   const [items, setItems] = useState<SearchItem[]>([]);
@@ -41,10 +45,11 @@ export function PokemonSearch({
     const t = setTimeout(async () => {
       setLoading(true);
       try {
-        const res = await fetch(
-          `/api/pokemon/search?q=${encodeURIComponent(query)}`,
-          { signal: controller.signal },
-        );
+        const params = new URLSearchParams({ q: query });
+        if (date) params.set("date", date);
+        const res = await fetch(`/api/pokemon/search?${params}`, {
+          signal: controller.signal,
+        });
         const data = (await res.json()) as SearchItem[];
         const filtered = data.filter((p) => !excludeIds.includes(p.id));
         setItems(filtered);
@@ -60,7 +65,7 @@ export function PokemonSearch({
       clearTimeout(t);
       controller.abort();
     };
-  }, [query, excludeIds]);
+  }, [query, excludeIds, date]);
 
   useEffect(() => {
     function onDoc(e: MouseEvent) {
@@ -85,7 +90,10 @@ export function PokemonSearch({
           value={query}
           disabled={disabled}
           placeholder="Search a Pokémon..."
-          className="h-11 rounded-xl border-border/80 bg-background/80 pl-10 pr-10 text-base shadow-sm transition focus-visible:ring-teal-500/40 sm:h-12"
+          className={cn(
+            "h-11 rounded-xl border-border/80 bg-background/80 pl-10 text-base shadow-sm transition focus-visible:ring-teal-500/40 sm:h-12",
+            generationLabel ? "pr-28" : "pr-10",
+          )}
           role="combobox"
           aria-expanded={open}
           aria-controls={listId}
@@ -109,6 +117,11 @@ export function PokemonSearch({
             }
           }}
         />
+        {generationLabel ? (
+          <span className="pointer-events-none absolute top-1/2 right-10 -translate-y-1/2 rounded-full border border-teal-500/25 bg-teal-500/10 px-2 py-0.5 text-[10px] font-medium tracking-wide text-teal-800 uppercase dark:text-teal-200">
+            {generationLabel}
+          </span>
+        ) : null}
         {loading ? (
           <LoaderCircle className="absolute top-1/2 right-3 size-4 -translate-y-1/2 animate-spin text-muted-foreground" />
         ) : null}

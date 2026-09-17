@@ -43,9 +43,12 @@ export const pokemon = pgTable("pokemon", {
   isMythical: boolean("is_mythical").notNull().default(false),
   evolvesFrom: integer("evolves_from"),
   evolutionStage: integer("evolution_stage").notNull().default(1),
+  evolutionLineLength: integer("evolution_line_length").notNull().default(1),
   sprite: text("sprite").notNull(),
   difficulty: difficultyEnum("difficulty").notNull().default("NORMAL"),
   typesJson: jsonb("types_json").notNull().$type<string[]>().default([]),
+  primaryColor: text("primary_color"),
+  secondaryColor: text("secondary_color"),
 });
 
 export const dailyChallenges = pgTable(

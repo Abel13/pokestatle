@@ -100,9 +100,12 @@ function ensureSchema(sqlite: Database.Database) {
       is_mythical INTEGER NOT NULL DEFAULT 0,
       evolves_from INTEGER,
       evolution_stage INTEGER NOT NULL DEFAULT 1,
+      evolution_line_length INTEGER NOT NULL DEFAULT 1,
       sprite TEXT NOT NULL,
       difficulty TEXT NOT NULL DEFAULT 'NORMAL',
-      types_json TEXT NOT NULL DEFAULT '[]'
+      types_json TEXT NOT NULL DEFAULT '[]',
+      primary_color TEXT,
+      secondary_color TEXT
     );
 
     CREATE TABLE IF NOT EXISTS daily_challenges (
@@ -142,6 +145,24 @@ function ensureSchema(sqlite: Database.Database) {
       last_challenge_id INTEGER
     );
   `);
+
+  ensurePokemonHintColumns(sqlite);
+}
+
+function ensurePokemonHintColumns(sqlite: Database.Database) {
+  const cols = sqlite.pragma("table_info(pokemon)") as { name: string }[];
+  const names = new Set(cols.map((c) => c.name));
+  if (!names.has("evolution_line_length")) {
+    sqlite.exec(
+      "ALTER TABLE pokemon ADD COLUMN evolution_line_length INTEGER NOT NULL DEFAULT 1",
+    );
+  }
+  if (!names.has("primary_color")) {
+    sqlite.exec("ALTER TABLE pokemon ADD COLUMN primary_color TEXT");
+  }
+  if (!names.has("secondary_color")) {
+    sqlite.exec("ALTER TABLE pokemon ADD COLUMN secondary_color TEXT");
+  }
 }
 
 type SqliteDb = ReturnType<typeof drizzleSqlite<typeof sqliteSchema>>;

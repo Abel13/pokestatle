@@ -1,4 +1,4 @@
-import { eq, sql } from "drizzle-orm";
+import { and, eq, or, sql } from "drizzle-orm";
 import {
   getPgDb,
   getSqliteDb,
@@ -47,9 +47,12 @@ function mapPokemon(row: {
   isMythical: boolean;
   evolvesFrom: number | null;
   evolutionStage: number;
+  evolutionLineLength?: number | null;
   sprite: string;
   difficulty: string;
   typesJson: unknown;
+  primaryColor?: string | null;
+  secondaryColor?: string | null;
 }): PokemonRecord {
   return {
     id: row.id,
@@ -69,9 +72,12 @@ function mapPokemon(row: {
     isMythical: Boolean(row.isMythical),
     evolvesFrom: row.evolvesFrom,
     evolutionStage: row.evolutionStage,
+    evolutionLineLength: row.evolutionLineLength ?? 1,
     sprite: resolveSpriteUrl(row.id, row.sprite),
     difficulty: row.difficulty as Difficulty,
     types: parseTypes(row.typesJson),
+    primaryColor: row.primaryColor ?? null,
+    secondaryColor: row.secondaryColor ?? null,
   };
 }
 
@@ -233,17 +239,27 @@ export async function getPokemonById(
   return row ? mapPokemon(row) : null;
 }
 
-export async function searchPokemon(query: string, limit = 12) {
+export async function searchPokemon(
+  query: string,
+  limit = 12,
+  generation?: number,
+) {
   const q = query.trim().toLowerCase();
   if (!q) return [];
   const pattern = `%${q}%`;
 
   if (usePostgres()) {
+    const nameMatch = or(
+      sql`lower(${pgSchema.pokemon.name}) like ${pattern}`,
+      sql`lower(${pgSchema.pokemon.slug}) like ${pattern}`,
+    );
     const rows = await getPgDb()
       .select()
       .from(pgSchema.pokemon)
       .where(
-        sql`lower(${pgSchema.pokemon.name}) like ${pattern} or lower(${pgSchema.pokemon.slug}) like ${pattern}`,
+        generation != null
+          ? and(eq(pgSchema.pokemon.generation, generation), nameMatch)
+          : nameMatch,
       )
       .limit(limit);
     return rows.map((p) => ({
@@ -254,11 +270,17 @@ export async function searchPokemon(query: string, limit = 12) {
     }));
   }
 
+  const nameMatch = or(
+    sql`lower(${schema.pokemon.name}) like ${pattern}`,
+    sql`lower(${schema.pokemon.slug}) like ${pattern}`,
+  );
   const rows = getSqliteDb()
     .select()
     .from(schema.pokemon)
     .where(
-      sql`lower(${schema.pokemon.name}) like ${pattern} or lower(${schema.pokemon.slug}) like ${pattern}`,
+      generation != null
+        ? and(eq(schema.pokemon.generation, generation), nameMatch)
+        : nameMatch,
     )
     .limit(limit)
     .all();
