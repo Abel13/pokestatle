@@ -27,6 +27,14 @@ const UNLOCK_ROUND: Record<HintKind, number> = {
   colors: 6,
 };
 
+function compactEvolutionCaption(stage: number, lineLength: number): string {
+  if (lineLength <= 1) return "No evo";
+  const pos = `${stage}/${lineLength}`;
+  if (stage <= 1) return `First · ${pos}`;
+  if (stage >= lineLength) return `Final · ${pos}`;
+  return `Mid · ${pos}`;
+}
+
 function SlotShell({
   title,
   children,
@@ -39,7 +47,7 @@ function SlotShell({
   return (
     <div
       className={cn(
-        "flex min-h-0 flex-col items-center justify-center gap-1 rounded-xl border px-1 py-1.5 text-center sm:min-h-[5.75rem] sm:gap-1.5 sm:rounded-2xl sm:px-2.5 sm:py-2.5",
+        "flex min-h-0 flex-col items-center justify-start gap-1 rounded-xl border px-1 py-1.5 text-center sm:min-h-[5.75rem] sm:gap-1.5 sm:rounded-2xl sm:px-2.5 sm:py-2.5",
         unlocked
           ? "border-border/70 bg-background/80"
           : "border-dashed border-border/60 bg-muted/20",
@@ -124,7 +132,7 @@ export function HintRail({
                 </motion.div>
               ))}
             </div>
-            <p className="hidden text-[11px] capitalize text-muted-foreground sm:block">
+            <p className="max-w-full px-0.5 text-[9px] capitalize leading-tight text-muted-foreground sm:text-[11px]">
               {hints.types.join(" / ")}
             </p>
           </UnlockedBody>
@@ -145,8 +153,14 @@ export function HintRail({
               animate={fresh("evolution")}
               className="size-7 sm:size-9"
             />
-            <p className="hidden max-w-[9.5rem] text-[11px] leading-snug text-muted-foreground sm:block">
-              {hints.evolution.label}
+            <p className="max-w-full px-0.5 text-[9px] leading-tight text-muted-foreground sm:max-w-[9.5rem] sm:text-[11px] sm:leading-snug">
+              <span className="sm:hidden">
+                {compactEvolutionCaption(
+                  hints.evolution.stage,
+                  hints.evolution.lineLength,
+                )}
+              </span>
+              <span className="hidden sm:inline">{hints.evolution.label}</span>
             </p>
           </UnlockedBody>
         ) : (
@@ -169,7 +183,7 @@ export function HintRail({
               />
             </motion.div>
             <p
-              className="hidden text-[11px] text-muted-foreground sm:block"
+              className="max-w-full px-0.5 text-[9px] leading-tight text-muted-foreground sm:text-[11px]"
               aria-label={`${hints.colors.primary} and ${hints.colors.secondary}`}
             >
               Main palette

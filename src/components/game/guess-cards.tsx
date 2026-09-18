@@ -7,7 +7,6 @@ import { EvolutionHintMark } from "@/components/game/hint-icons";
 import { MatchMark } from "@/components/game/match-mark";
 import { StatChip } from "@/components/game/stat-chip";
 import { TypeIcon } from "@/components/game/type-icon";
-import { StatusLegend } from "@/components/game/status-legend";
 import {
   Popover,
   PopoverContent,
@@ -80,7 +79,7 @@ function HintExplain({
         align="end"
         side="top"
         sideOffset={8}
-        className="w-60 max-w-[calc(100vw-1.5rem)] gap-1.5 bg-background p-3 shadow-lg ring-1 ring-border"
+        className="w-52 max-w-[calc(100vw-1.5rem)] gap-1.5 bg-background p-3 shadow-lg ring-1 ring-border"
       >
         <PopoverHeader>
           <PopoverTitle className="font-heading text-sm tracking-tight">
@@ -95,26 +94,23 @@ function HintExplain({
 
 function TypesHintDetails({ types }: { types: TypeResult[] }) {
   return (
-    <div className="space-y-2.5">
-      <ul className="space-y-1.5">
-        {types.map((entry) => (
-          <li key={entry.type} className="flex items-center gap-2 text-xs">
-            <TypeIcon type={entry.type} matched={entry.match} />
-            <span className="capitalize">{entry.type}</span>
-            <span
-              className={
-                entry.match
-                  ? "ml-auto text-emerald-700 dark:text-emerald-300"
-                  : "ml-auto text-muted-foreground"
-              }
-            >
-              {entry.match ? "Match" : "No match"}
-            </span>
-          </li>
-        ))}
-      </ul>
-      <StatusLegend compact className="border-t border-border/60 pt-2" />
-    </div>
+    <ul className="space-y-1.5">
+      {types.map((entry) => (
+        <li key={entry.type} className="flex items-center gap-2 text-xs">
+          <TypeIcon type={entry.type} matched={entry.match} />
+          <span className="capitalize">{entry.type}</span>
+          <span
+            className={
+              entry.match
+                ? "ml-auto text-emerald-700 dark:text-emerald-300"
+                : "ml-auto text-muted-foreground"
+            }
+          >
+            {entry.match ? "Match" : "No match"}
+          </span>
+        </li>
+      ))}
+    </ul>
   );
 }
 

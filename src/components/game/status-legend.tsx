@@ -1,26 +1,6 @@
 import { cn } from "@/lib/utils";
 
-export function StatusLegend({
-  className,
-  compact = false,
-}: {
-  className?: string;
-  compact?: boolean;
-}) {
-  if (compact) {
-    return (
-      <p
-        className={cn(
-          "text-[10px] leading-snug text-muted-foreground",
-          className,
-        )}
-      >
-        <span className="block">🟩 exact · 🟨 ≤10% · 🟧 ≤25%</span>
-        <span className="block">⬆️ higher · ⬇️ lower · ⬛ types miss</span>
-      </p>
-    );
-  }
-
+export function StatusLegend({ className }: { className?: string }) {
   return (
     <p
       className={cn(
