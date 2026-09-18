@@ -7,7 +7,7 @@ const gaMeasurementId =
 
 function track(
   name: string,
-  params?: Record<string, string | number | boolean>,
+  params: Record<string, string | number | boolean>,
 ) {
   if (!gaMeasurementId) return;
   sendGAEvent("event", name, params);
