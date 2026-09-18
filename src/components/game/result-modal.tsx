@@ -13,6 +13,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { StatusLegend } from "@/components/game/status-legend";
+import { trackShare } from "@/lib/analytics";
 import { calculateResultScore } from "@/lib/game/score";
 import { formatShareText, formatShareUrl } from "@/lib/game/share";
 import type { GuessResult } from "@/lib/game/types";
@@ -47,6 +48,7 @@ export function ResultModal({
   async function copyToClipboard() {
     await navigator.clipboard.writeText(share);
     setCopied(true);
+    trackShare({ method: "clipboard", challengeId });
     setTimeout(() => setCopied(false), 1600);
   }
 
@@ -61,6 +63,7 @@ export function ResultModal({
           title: `PokéStatle #${challengeId}`,
           text: share,
         });
+        trackShare({ method: "native", challengeId });
         return;
       } catch (err) {
         if (err instanceof DOMException && err.name === "AbortError") return;

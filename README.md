@@ -31,6 +31,7 @@ App: [http://127.0.0.1:43127](http://127.0.0.1:43127)
 | `NEXT_PUBLIC_SUPABASE_URL` | Enable Google Auth |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key |
 | `DATABASE_URL` / `POSTGRES_URL` / `STORAGE_POSTGRES_URL` | Supabase Postgres URI (any of these names works) |
+| `NEXT_PUBLIC_GA_MEASUREMENT_ID` | Google Analytics 4 measurement ID (`G-…`). Empty locally skips tracking |
 
 Without Supabase credentials the game runs fully in **guest mode** (progress in `localStorage`, SQLite catalog).
 

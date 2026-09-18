@@ -12,6 +12,8 @@ import { ResultModal } from "@/components/game/result-modal";
 import { StatusLegend } from "@/components/game/status-legend";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { trackGameComplete, trackGuess } from "@/lib/analytics";
+import { calculateResultScore } from "@/lib/game/score";
 import type { GameState, GuessResult } from "@/lib/game/types";
 import { MAX_GUESSES } from "@/lib/game/types";
 import type { ChallengeHints, HintKind } from "@/lib/game/hints";
@@ -167,6 +169,13 @@ export function GameBoard() {
         setState(next);
         saveGameState(next);
 
+        trackGuess({
+          guessNumber: next.guesses.length,
+          pokemonName: result.name,
+          isCorrect: result.isCorrect,
+          challengeDate: challenge.date,
+        });
+
         if (data.hints) {
           const incoming = data.hints as ChallengeHints;
           const prevKeys = unlockedHintKeys(hints ?? {});
@@ -177,10 +186,18 @@ export function GameBoard() {
         }
 
         if (next.status !== "PLAYING") {
+          const won = next.status === "WON";
           updateLocalStatsOnComplete({
             challengeId: next.challengeId,
-            won: next.status === "WON",
+            won,
             guessCount: next.guesses.length,
+          });
+          const { score } = calculateResultScore(next.results, won, MAX_GUESSES);
+          trackGameComplete({
+            won,
+            guessCount: next.guesses.length,
+            score,
+            challengeId: next.challengeId,
           });
           setModalOpen(true);
         }

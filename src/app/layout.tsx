@@ -1,10 +1,14 @@
 import type { Metadata } from "next";
 import { Outfit } from "next/font/google";
+import { GoogleAnalytics } from "@next/third-parties/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
 import { QueryProvider } from "@/components/providers/query-provider";
 import "./globals.css";
+
+const gaId =
+  process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || process.env.NEXT_PUBLIC_GA_ID;
 
 const outfit = Outfit({
   variable: "--font-sans",
@@ -46,6 +50,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           </QueryProvider>
         </ThemeProvider>
       </body>
+      {gaId ? (
+        <GoogleAnalytics
+          gaId={gaId}
+          debugMode={process.env.NODE_ENV !== "production"}
+        />
+      ) : null}
     </html>
   );
 }
