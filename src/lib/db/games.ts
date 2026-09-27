@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, gte, lte } from "drizzle-orm";
 import {
   getPgDb,
   getSqliteDb,
@@ -9,6 +9,86 @@ import {
 import type { GameStatus, GuessResult } from "@/lib/game/types";
 import { MAX_GUESSES } from "@/lib/game/types";
 import { calculateResultScore } from "@/lib/game/score";
+
+export type MonthlyLeaderboardEntry = {
+  userId: string;
+  displayName: string;
+  avatarUrl: string | null;
+  played: number;
+  wins: number;
+  totalScore: number;
+  avgScore: number;
+  currentStreak: number;
+  maxStreak: number;
+};
+
+type MonthlyGameRow = {
+  userId: string;
+  displayName: string | null;
+  avatarUrl: string | null;
+  status: string;
+  score: number | null;
+  currentStreak: number | null;
+  maxStreak: number | null;
+};
+
+function aggregateMonthlyLeaderboard(
+  rows: MonthlyGameRow[],
+  limit: number,
+): MonthlyLeaderboardEntry[] {
+  const byUser = new Map<
+    string,
+    {
+      displayName: string;
+      avatarUrl: string | null;
+      played: number;
+      wins: number;
+      totalScore: number;
+      currentStreak: number;
+      maxStreak: number;
+    }
+  >();
+
+  for (const row of rows) {
+    if (row.status !== "WON" && row.status !== "LOST") continue;
+    const existing = byUser.get(row.userId);
+    if (existing) {
+      existing.played += 1;
+      if (row.status === "WON") existing.wins += 1;
+      existing.totalScore += row.score ?? 0;
+    } else {
+      byUser.set(row.userId, {
+        displayName: row.displayName || "Trainer",
+        avatarUrl: row.avatarUrl,
+        played: 1,
+        wins: row.status === "WON" ? 1 : 0,
+        totalScore: row.score ?? 0,
+        currentStreak: row.currentStreak ?? 0,
+        maxStreak: row.maxStreak ?? 0,
+      });
+    }
+  }
+
+  return [...byUser.entries()]
+    .map(([userId, stats]) => ({
+      userId,
+      displayName: stats.displayName,
+      avatarUrl: stats.avatarUrl,
+      played: stats.played,
+      wins: stats.wins,
+      totalScore: stats.totalScore,
+      avgScore: stats.played > 0 ? Math.round(stats.totalScore / stats.played) : 0,
+      currentStreak: stats.currentStreak,
+      maxStreak: stats.maxStreak,
+    }))
+    .sort((a, b) => {
+      if (a.totalScore !== b.totalScore) return b.totalScore - a.totalScore;
+      if (a.wins !== b.wins) return b.wins - a.wins;
+      if (a.played !== b.played) return b.played - a.played;
+      return a.displayName.localeCompare(b.displayName);
+    })
+    .slice(0, limit);
+}
 
 function parseJsonArray<T>(value: unknown): T[] {
   if (Array.isArray(value)) return value as T[];
@@ -637,4 +717,72 @@ export async function getTodayLeaderboard(challengeId: number, limit = 20) {
     .slice(0, limit);
 
   return rows;
+}
+
+export async function getMonthlyLeaderboard(
+  startDate: string,
+  endDate: string,
+  limit = 25,
+): Promise<MonthlyLeaderboardEntry[]> {
+  if (usePostgres()) {
+    const rows = await getPgDb()
+      .select({
+        userId: pgSchema.games.userId,
+        displayName: pgSchema.profiles.displayName,
+        avatarUrl: pgSchema.profiles.avatarUrl,
+        status: pgSchema.games.status,
+        score: pgSchema.games.score,
+        currentStreak: pgSchema.userStats.currentStreak,
+        maxStreak: pgSchema.userStats.maxStreak,
+      })
+      .from(pgSchema.games)
+      .innerJoin(
+        pgSchema.profiles,
+        eq(pgSchema.games.userId, pgSchema.profiles.id),
+      )
+      .innerJoin(
+        pgSchema.dailyChallenges,
+        eq(pgSchema.games.challengeId, pgSchema.dailyChallenges.id),
+      )
+      .leftJoin(
+        pgSchema.userStats,
+        eq(pgSchema.games.userId, pgSchema.userStats.userId),
+      )
+      .where(
+        and(
+          gte(pgSchema.dailyChallenges.date, startDate),
+          lte(pgSchema.dailyChallenges.date, endDate),
+        ),
+      );
+
+    return aggregateMonthlyLeaderboard(rows, limit);
+  }
+
+  const db = getSqliteDb();
+  const rows = db
+    .select({
+      userId: schema.games.userId,
+      displayName: schema.profiles.displayName,
+      avatarUrl: schema.profiles.avatarUrl,
+      status: schema.games.status,
+      score: schema.games.score,
+      currentStreak: schema.userStats.currentStreak,
+      maxStreak: schema.userStats.maxStreak,
+    })
+    .from(schema.games)
+    .innerJoin(schema.profiles, eq(schema.games.userId, schema.profiles.id))
+    .innerJoin(
+      schema.dailyChallenges,
+      eq(schema.games.challengeId, schema.dailyChallenges.id),
+    )
+    .leftJoin(schema.userStats, eq(schema.games.userId, schema.userStats.userId))
+    .where(
+      and(
+        gte(schema.dailyChallenges.date, startDate),
+        lte(schema.dailyChallenges.date, endDate),
+      ),
+    )
+    .all();
+
+  return aggregateMonthlyLeaderboard(rows, limit);
 }

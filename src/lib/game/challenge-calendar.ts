@@ -31,3 +31,21 @@ export function challengeIdFromDate(date: string): number {
   const days = Math.floor((current - epoch) / 86_400_000) + 1;
   return Math.max(1, days);
 }
+
+/** Calendar month containing `today` (YYYY-MM-DD), capped at today for in-progress months. */
+export function getChallengeMonthBounds(today = getChallengeDate()): {
+  yearMonth: string;
+  startDate: string;
+  endDate: string;
+} {
+  const [y, m] = today.split("-").map(Number);
+  const yearMonth = `${y}-${String(m).padStart(2, "0")}`;
+  const startDate = `${yearMonth}-01`;
+  const lastDay = new Date(Date.UTC(y, m, 0)).getUTCDate();
+  const monthEnd = `${yearMonth}-${String(lastDay).padStart(2, "0")}`;
+  return {
+    yearMonth,
+    startDate,
+    endDate: monthEnd > today ? today : monthEnd,
+  };
+}

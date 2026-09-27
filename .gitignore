@@ -50,3 +50,5 @@ next-env.d.ts
 
 # Cursor IDE MCP configuration (local)
 .cursor/
+supabase/.temp
+supabase/.branches

@@ -11,6 +11,7 @@ export {
   addChallengeDays,
   challengeIdFromDate,
   getChallengeDate,
+  getChallengeMonthBounds,
   parseDateOnly,
 } from "./challenge-calendar";
 

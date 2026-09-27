@@ -7,7 +7,7 @@
  *   pnpm db:push-supabase
  *   FORCE_DB_PUSH=1 pnpm db:push-supabase
  */
-import "dotenv/config";
+import { config as loadEnv } from "dotenv";
 import fs from "fs";
 import path from "path";
 import postgres from "postgres";
@@ -94,22 +94,19 @@ function parseTypes(value: string | string[]): string[] {
   }
 }
 
+// Next.js loads `.env.local` then `.env`; `dotenv/config` only loads `.env`.
+loadEnv({ path: ".env.local" });
+loadEnv();
+
 async function main() {
   const url = getDatabaseUrl();
-  const onVercel = Boolean(process.env.VERCEL);
   const force = process.env.FORCE_DB_PUSH === "1";
 
   if (!url) {
-    if (onVercel || process.env.CI) {
-      console.warn(
-        "[db:push] No Postgres URL in this environment — skipping schema/seed (SQLite fallback).",
-      );
-      process.exit(0);
-    }
-    console.error(
-      "Missing Postgres URL. Set DATABASE_URL, POSTGRES_URL, or STORAGE_POSTGRES_URL.",
+    console.warn(
+      "[db:push] No Postgres URL — skipping schema/seed (SQLite fallback). Set DATABASE_URL, POSTGRES_URL, or STORAGE_POSTGRES_URL.",
     );
-    process.exit(1);
+    process.exit(0);
   }
 
   const migrationPath = path.join(
