@@ -22,3 +22,22 @@ export function saveScaleGameState(state: ScaleGameState) {
   if (typeof window === "undefined") return;
   localStorage.setItem(scaleStorageKey(state.date), JSON.stringify(state));
 }
+
+/** Guest completed scale games from localStorage. */
+export function listLocalScaleGames(): ScaleGameState[] {
+  if (typeof window === "undefined") return [];
+  const out: ScaleGameState[] = [];
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (!key?.startsWith(SCALE_PREFIX)) continue;
+      const raw = localStorage.getItem(key);
+      if (!raw) continue;
+      const parsed = JSON.parse(raw) as ScaleGameState;
+      if (parsed?.status === "COMPLETE") out.push(parsed);
+    }
+  } catch {
+    return out;
+  }
+  return out.sort((a, b) => b.challengeId - a.challengeId);
+}

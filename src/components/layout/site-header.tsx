@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Archive, BarChart3, History, Ruler, Trophy } from "lucide-react";
+import { Archive, BarChart3, History, Trophy } from "lucide-react";
 import { useEffect, useState } from "react";
 import { AuthButton } from "@/components/auth/auth-button";
 import { LogoMark } from "@/components/brand/logo-mark";
@@ -10,8 +10,12 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { cn } from "@/lib/utils";
 
 const links = [
-  { href: "/", label: "Play" },
-  { href: "/scale", label: "Size", icon: Ruler },
+  {
+    href: "/",
+    label: "Play",
+    match: (p: string) =>
+      p === "/" || p.startsWith("/resize-them") || p.startsWith("/scale"),
+  },
   { href: "/archive", label: "Archive", icon: Archive },
   { href: "/stats", label: "Stats", icon: BarChart3 },
   { href: "/leaderboard", label: "Rank", icon: Trophy },
@@ -22,6 +26,11 @@ export function SiteHeader() {
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
+
+  function isActive(link: (typeof links)[number]) {
+    if ("match" in link && link.match) return link.match(pathname);
+    return pathname === link.href || pathname.startsWith(link.href);
+  }
 
   return (
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-md">
@@ -44,10 +53,7 @@ export function SiteHeader() {
               href={link.href}
               className={cn(
                 "rounded-md px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground",
-                mounted &&
-                  (pathname === link.href ||
-                    (link.href !== "/" && pathname.startsWith(link.href))) &&
-                  "bg-muted text-foreground",
+                mounted && isActive(link) && "bg-muted text-foreground",
               )}
             >
               {link.label}
@@ -71,8 +77,7 @@ export function SiteHeader() {
               className={cn(
                 "flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] text-muted-foreground",
                 mounted &&
-                  (pathname === link.href ||
-                    (link.href !== "/" && pathname.startsWith(link.href))) &&
+                  isActive(link) &&
                   "text-teal-700 dark:text-teal-300",
               )}
             >

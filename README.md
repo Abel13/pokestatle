@@ -2,7 +2,7 @@
 
 Daily Pokémon guessing game inspired by Wordle. Everyone gets the same secret Pokémon each day. Feedback covers types, generation, height, weight, and base stats — with proximity bands and direction arrows (Lucide icons, no emojis).
 
-**PokéSize** (`/scale`) is a second daily mode: five height-comparison pairs (10 Pokémon). Resize one silhouette against a known reference, then score 0–100 per round (daily total 0–500).
+**Resize them** (`/resize-them`) is a second daily mode: five height-comparison pairs (10 Pokémon). Resize one silhouette against a known reference, then score 0–100 per round (daily total 0–500).
 
 ## Stack
 

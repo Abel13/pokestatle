@@ -15,6 +15,7 @@ import {
   loadScaleGameState,
   saveScaleGameState,
 } from "@/lib/game/scale-storage";
+import { formatResizeShareUrl } from "@/lib/game/modes";
 import {
   MAX_SCALE_TOTAL,
   SCALE_ROUNDS,
@@ -72,7 +73,7 @@ function useCountUp(
   return value;
 }
 
-export function ScaleBoard() {
+export function ScaleBoard({ date: dateProp }: { date?: string | null } = {}) {
   const [challenge, setChallenge] = useState<ScaleChallengePublic | null>(null);
   const [state, setState] = useState<ScaleGameState | null>(null);
   const [guessHeightDm, setGuessHeightDm] = useState(10);
@@ -83,6 +84,11 @@ export function ScaleBoard() {
   const [roundFlash, setRoundFlash] = useState<ScaleRoundResult | null>(null);
   /** When set, canvas shows that completed pair's result. */
   const [reviewIndex, setReviewIndex] = useState<number | null>(null);
+
+  const dateQuery =
+    dateProp && /^\d{4}-\d{2}-\d{2}$/.test(dateProp)
+      ? `?date=${dateProp}`
+      : "";
 
   const currentIndex = state?.rounds.length ?? 0;
   const isComplete = state?.status === "COMPLETE";
@@ -127,10 +133,12 @@ export function ScaleBoard() {
     async function load() {
       setLoading(true);
       setError(null);
+      setRoundFlash(null);
+      setReviewIndex(null);
       try {
         const [todayRes, meRes] = await Promise.all([
-          fetch("/api/scale/today"),
-          fetch("/api/scale/me/today"),
+          fetch(`/api/scale/today${dateQuery}`),
+          fetch(`/api/scale/me/today${dateQuery}`),
         ]);
         const todayData = await todayRes.json();
         if (!todayRes.ok) throw new Error(todayData.error || "Failed to load");
@@ -200,7 +208,7 @@ export function ScaleBoard() {
       }
     }
     void load();
-  }, []);
+  }, [dateQuery]);
 
   const bounds = useMemo(() => {
     if (!displayRound) return { min: 1, max: 100 };
@@ -232,6 +240,7 @@ export function ScaleBoard() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          date: challenge.date,
           roundIndex,
           guessHeightDm,
           previousRounds: state.rounds,
@@ -281,15 +290,15 @@ export function ScaleBoard() {
 
   async function copyShare() {
     if (!state) return;
-    const url =
-      typeof window !== "undefined"
-        ? `${window.location.origin}/scale`
-        : undefined;
+    const origin =
+      typeof window !== "undefined" ? window.location.origin : "";
+    const siteUrl = origin
+      ? formatResizeShareUrl(origin, state.date)
+      : undefined;
     const text = formatScaleShareText({
-      challengeId: state.challengeId,
       scores: state.rounds.map((r) => r.score),
       totalScore: state.totalScore,
-      siteUrl: url,
+      siteUrl,
     });
     await navigator.clipboard.writeText(text);
     setCopied(true);
@@ -603,7 +612,7 @@ export function ScaleBoard() {
               </span>
               <span>
                 {" "}
-                · PokéSize #{challenge.challengeId}
+                · Resize them #{challenge.challengeId}
               </span>
             </p>
             <Button

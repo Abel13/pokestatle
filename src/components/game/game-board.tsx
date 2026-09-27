@@ -8,7 +8,7 @@ import { LogoMark } from "@/components/brand/logo-mark";
 import { GuessCards } from "@/components/game/guess-cards";
 import { HintRail } from "@/components/game/hint-rail";
 import { PokemonSearch } from "@/components/game/pokemon-search";
-import { ResultModal } from "@/components/game/result-modal";
+import { ResultScreen } from "@/components/game/result-screen";
 import { StatusLegend } from "@/components/game/status-legend";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -40,7 +40,6 @@ export function GameBoard() {
   const [state, setState] = useState<GameState | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [modalOpen, setModalOpen] = useState(false);
   const [hints, setHints] = useState<ChallengeHints | null>(null);
   const [justUnlocked, setJustUnlocked] = useState<HintKind[]>([]);
   const skipHintFetch = useRef(false);
@@ -88,7 +87,6 @@ export function GameBoard() {
       };
       setState(updated);
       saveGameState(updated);
-      if (updated.status !== "PLAYING") setModalOpen(true);
     } else {
       const fresh: GameState = {
         challengeId: challenge.id,
@@ -199,7 +197,6 @@ export function GameBoard() {
             score,
             challengeId: next.challengeId,
           });
-          setModalOpen(true);
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Guess failed");
@@ -239,6 +236,18 @@ export function GameBoard() {
     );
   }
 
+  if (state && state.status !== "PLAYING" && challenge) {
+    return (
+      <ResultScreen
+        won={state.status === "WON"}
+        challengeId={challenge.id}
+        results={state.results}
+        revealed={state.revealedPokemon}
+        date={challenge.date}
+      />
+    );
+  }
+
   return (
     <div className="space-y-5 sm:space-y-7">
       <motion.section
@@ -253,7 +262,7 @@ export function GameBoard() {
             <LogoMark className="size-12 sm:size-14" />
           </div>
           <p className="font-heading text-3xl font-semibold tracking-tight sm:text-5xl">
-            PokéStatle
+            Guess them
             {challenge ? (
               <span className="ml-1.5 text-teal-700 sm:ml-2 dark:text-teal-300">
                 #{challenge.id}
@@ -284,7 +293,10 @@ export function GameBoard() {
       <div className="space-y-3">
         <PokemonSearch
           disabled={
-            submitting || !state || state.status !== "PLAYING" || remaining <= 0
+            submitting ||
+            !state ||
+            state.status !== "PLAYING" ||
+            remaining <= 0
           }
           excludeIds={state?.guesses ?? []}
           onSelect={onSelect}
@@ -301,39 +313,13 @@ export function GameBoard() {
             Comparing attributes...
           </p>
         ) : null}
-        {error ? (
-          <p className="text-sm text-destructive">{error}</p>
-        ) : null}
+        {error ? <p className="text-sm text-destructive">{error}</p> : null}
       </div>
 
       <div className="space-y-2">
         <GuessCards results={state?.results ?? []} />
         <StatusLegend />
       </div>
-
-      {state && challenge ? (
-        <ResultModal
-          open={modalOpen}
-          onOpenChange={setModalOpen}
-          won={state.status === "WON"}
-          challengeId={challenge.id}
-          results={state.results}
-          revealed={state.revealedPokemon}
-          date={challenge.date}
-        />
-      ) : null}
-
-      {state && state.status !== "PLAYING" ? (
-        <div className="text-center">
-          <button
-            type="button"
-            className="text-sm text-teal-700 underline-offset-4 hover:underline dark:text-teal-300"
-            onClick={() => setModalOpen(true)}
-          >
-            View result & share
-          </button>
-        </div>
-      ) : null}
     </div>
   );
 }

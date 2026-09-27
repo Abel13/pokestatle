@@ -55,7 +55,12 @@ export function formatShareText(
     ].join("");
   });
 
-  const textParts = [`PokéStatle #${challengeId}`, ...lines, attempts, grade];
+  const textParts = [
+    "Pokéstatle: Guess them",
+    ...lines,
+    attempts,
+    grade,
+  ];
   
   if (siteUrl) {
     textParts.push("", siteUrl);

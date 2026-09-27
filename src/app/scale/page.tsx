@@ -1,5 +1,6 @@
-import { ScaleBoard } from "@/components/scale/scale-board";
+import { redirect } from "next/navigation";
 
-export default function ScalePage() {
-  return <ScaleBoard />;
+/** Legacy Size route → Resize them. */
+export default function ScaleRedirectPage() {
+  redirect("/resize-them");
 }

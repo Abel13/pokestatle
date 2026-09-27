@@ -35,27 +35,23 @@ export function letterGradeScale(totalScore: number): string {
 }
 
 export function formatScaleShareText(input: {
-  challengeId: number;
   scores: number[];
   totalScore: number;
   siteUrl?: string;
 }): string {
-  const bars = input.scores
-    .map((s) => {
-      if (s >= 90) return "🟩";
-      if (s >= 70) return "🟨";
-      if (s >= 40) return "🟧";
-      return "⬛";
-    })
-    .join("");
-  const grade = letterGradeScale(input.totalScore);
+  const lines = input.scores.map((score) => {
+    const filled = Math.max(0, Math.min(5, Math.round(score / 20)));
+    const bar = "🟩".repeat(filled) + "⬜".repeat(5 - filled);
+    return `${bar} ${score}`;
+  });
   const parts = [
-    `PokéSize #${input.challengeId}`,
-    bars,
-    `${input.totalScore}/500 · ${grade}`,
+    "Pokéstatle: Resize them",
+    `Overall Score ${input.totalScore}`,
+    "",
+    ...lines,
   ];
   if (input.siteUrl) {
-    parts.push("", input.siteUrl);
+    parts.push(input.siteUrl);
   }
   return parts.join("\n");
 }

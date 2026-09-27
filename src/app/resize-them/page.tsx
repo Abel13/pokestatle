@@ -4,10 +4,10 @@ import {
   PlayHubSkeleton,
 } from "@/components/game/play-hub";
 
-export default function HomePage() {
+export default function ResizeThemPage() {
   return (
     <Suspense fallback={<PlayHubSkeleton />}>
-      <PlayHub initialMode="guess" />
+      <PlayHub initialMode="resize" />
     </Suspense>
   );
 }

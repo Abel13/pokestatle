@@ -8,6 +8,10 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const bodySchema = z.object({
+  date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
   roundIndex: z.number().int().min(0).max(SCALE_ROUNDS - 1),
   guessHeightDm: z.number().positive().max(10_000),
   previousRounds: z
@@ -29,7 +33,7 @@ export async function POST(request: Request) {
     const json = await request.json();
     const body = bodySchema.parse(json);
     const payload = await processScaleGuess({
-      date: getChallengeDate(),
+      date: body.date ?? getChallengeDate(),
       roundIndex: body.roundIndex,
       guessHeightDm: body.guessHeightDm,
       previousRounds: body.previousRounds,

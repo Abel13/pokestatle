@@ -112,11 +112,10 @@ export async function getOrCreateTodayScaleChallenge(
   if (existing) return existing;
 
   const today = getChallengeDate();
-  if (date !== today) {
-    throw new Error(
-      `Scale challenge for ${date} does not exist. Historical challenges must be pre-created.`,
-    );
+  if (date > today) {
+    throw new Error(`Scale challenge for ${date} is not available yet.`);
   }
+  // Create on first access for today and past archive dates.
   return createScaleChallenge(date);
 }
 
@@ -452,4 +451,280 @@ export async function processScaleGuess(input: {
     completedAt,
     publicChallenge,
   };
+}
+
+function asIso(value: Date | string | null | undefined): string | null {
+  if (!value) return null;
+  if (typeof value === "string") return value;
+  return value.toISOString();
+}
+
+export async function listUserScaleGames(userId: string) {
+  if (usePostgres()) {
+    const rows = await getPgDb()
+      .select({
+        challengeId: pgSchema.scaleGames.challengeId,
+        status: pgSchema.scaleGames.status,
+        roundsJson: pgSchema.scaleGames.roundsJson,
+        totalScore: pgSchema.scaleGames.totalScore,
+        completedAt: pgSchema.scaleGames.completedAt,
+        date: pgSchema.scaleChallenges.date,
+      })
+      .from(pgSchema.scaleGames)
+      .innerJoin(
+        pgSchema.scaleChallenges,
+        eq(pgSchema.scaleGames.challengeId, pgSchema.scaleChallenges.id),
+      )
+      .where(eq(pgSchema.scaleGames.userId, userId));
+
+    return rows.map((r) => ({
+      challengeId: r.challengeId,
+      date: r.date,
+      status: r.status,
+      rounds: parseRounds(r.roundsJson),
+      totalScore: r.totalScore,
+      completedAt: asIso(r.completedAt),
+    }));
+  }
+
+  const rows = getSqliteDb()
+    .select({
+      challengeId: schema.scaleGames.challengeId,
+      status: schema.scaleGames.status,
+      roundsJson: schema.scaleGames.roundsJson,
+      totalScore: schema.scaleGames.totalScore,
+      completedAt: schema.scaleGames.completedAt,
+      date: schema.scaleChallenges.date,
+    })
+    .from(schema.scaleGames)
+    .innerJoin(
+      schema.scaleChallenges,
+      eq(schema.scaleGames.challengeId, schema.scaleChallenges.id),
+    )
+    .where(eq(schema.scaleGames.userId, userId))
+    .all();
+
+  return rows.map((r) => ({
+    challengeId: r.challengeId,
+    date: r.date,
+    status: r.status,
+    rounds: parseRounds(r.roundsJson),
+    totalScore: r.totalScore,
+    completedAt: r.completedAt,
+  }));
+}
+
+export async function getUserScaleStats(userId: string) {
+  const games = (await listUserScaleGames(userId)).filter(
+    (g) => g.status === "COMPLETE",
+  );
+  const played = games.length;
+  const totalScore = games.reduce((s, g) => s + g.totalScore, 0);
+  const bestScore = games.reduce((m, g) => Math.max(m, g.totalScore), 0);
+  const avgScore = played ? Math.round(totalScore / played) : 0;
+
+  // Streak by consecutive challenge dates (UTC calendar days).
+  const dates = new Set(games.map((g) => g.date));
+  let currentStreak = 0;
+  let maxStreak = 0;
+  const sorted = [...dates].sort();
+  let run = 0;
+  let prev: string | null = null;
+  for (const d of sorted) {
+    if (!prev) {
+      run = 1;
+    } else {
+      const prevDate = new Date(`${prev}T00:00:00Z`);
+      const curDate = new Date(`${d}T00:00:00Z`);
+      const diff =
+        (curDate.getTime() - prevDate.getTime()) / (24 * 60 * 60 * 1000);
+      run = diff === 1 ? run + 1 : 1;
+    }
+    maxStreak = Math.max(maxStreak, run);
+    prev = d;
+  }
+  const today = getChallengeDate();
+  if (dates.has(today)) {
+    currentStreak = 1;
+    let cursor = new Date(`${today}T00:00:00Z`);
+    for (;;) {
+      cursor.setUTCDate(cursor.getUTCDate() - 1);
+      const key = cursor.toISOString().slice(0, 10);
+      if (!dates.has(key)) break;
+      currentStreak += 1;
+    }
+  } else {
+    currentStreak = 0;
+  }
+
+  // Score buckets: 0–99, 100–199, …, 400–500
+  const distribution = [0, 0, 0, 0, 0];
+  for (const g of games) {
+    const idx = Math.min(4, Math.floor(g.totalScore / 100));
+    distribution[idx] = (distribution[idx] ?? 0) + 1;
+  }
+
+  return {
+    played,
+    avgScore,
+    bestScore,
+    currentStreak,
+    maxStreak,
+    distribution,
+  };
+}
+
+export async function getScaleTodayLeaderboard(
+  challengeId: number,
+  limit = 25,
+) {
+  if (usePostgres()) {
+    const rows = await getPgDb()
+      .select({
+        userId: pgSchema.scaleGames.userId,
+        displayName: pgSchema.profiles.displayName,
+        avatarUrl: pgSchema.profiles.avatarUrl,
+        status: pgSchema.scaleGames.status,
+        totalScore: pgSchema.scaleGames.totalScore,
+        completedAt: pgSchema.scaleGames.completedAt,
+      })
+      .from(pgSchema.scaleGames)
+      .innerJoin(
+        pgSchema.profiles,
+        eq(pgSchema.scaleGames.userId, pgSchema.profiles.id),
+      )
+      .where(eq(pgSchema.scaleGames.challengeId, challengeId));
+
+    return rows
+      .filter((r) => r.status === "COMPLETE")
+      .map((r) => ({
+        userId: r.userId,
+        displayName: r.displayName || "Trainer",
+        avatarUrl: r.avatarUrl,
+        totalScore: r.totalScore,
+        completedAt: asIso(r.completedAt),
+      }))
+      .sort((a, b) => {
+        if (b.totalScore !== a.totalScore) return b.totalScore - a.totalScore;
+        return (a.completedAt || "").localeCompare(b.completedAt || "");
+      })
+      .slice(0, limit);
+  }
+
+  const rows = getSqliteDb()
+    .select({
+      userId: schema.scaleGames.userId,
+      displayName: schema.profiles.displayName,
+      avatarUrl: schema.profiles.avatarUrl,
+      status: schema.scaleGames.status,
+      totalScore: schema.scaleGames.totalScore,
+      completedAt: schema.scaleGames.completedAt,
+    })
+    .from(schema.scaleGames)
+    .innerJoin(
+      schema.profiles,
+      eq(schema.scaleGames.userId, schema.profiles.id),
+    )
+    .where(eq(schema.scaleGames.challengeId, challengeId))
+    .all()
+    .filter((r) => r.status === "COMPLETE")
+    .map((r) => ({
+      userId: r.userId,
+      displayName: r.displayName || "Trainer",
+      avatarUrl: r.avatarUrl,
+      totalScore: r.totalScore,
+      completedAt: r.completedAt,
+    }))
+    .sort((a, b) => {
+      if (b.totalScore !== a.totalScore) return b.totalScore - a.totalScore;
+      return (a.completedAt || "").localeCompare(b.completedAt || "");
+    })
+    .slice(0, limit);
+
+  return rows;
+}
+
+export async function getScaleMonthlyLeaderboard(
+  startDate: string,
+  endDate: string,
+  limit = 25,
+) {
+  const games = await (async () => {
+    if (usePostgres()) {
+      return getPgDb()
+        .select({
+          userId: pgSchema.scaleGames.userId,
+          displayName: pgSchema.profiles.displayName,
+          avatarUrl: pgSchema.profiles.avatarUrl,
+          totalScore: pgSchema.scaleGames.totalScore,
+          status: pgSchema.scaleGames.status,
+          date: pgSchema.scaleChallenges.date,
+        })
+        .from(pgSchema.scaleGames)
+        .innerJoin(
+          pgSchema.profiles,
+          eq(pgSchema.scaleGames.userId, pgSchema.profiles.id),
+        )
+        .innerJoin(
+          pgSchema.scaleChallenges,
+          eq(pgSchema.scaleGames.challengeId, pgSchema.scaleChallenges.id),
+        );
+    }
+    return getSqliteDb()
+      .select({
+        userId: schema.scaleGames.userId,
+        displayName: schema.profiles.displayName,
+        avatarUrl: schema.profiles.avatarUrl,
+        totalScore: schema.scaleGames.totalScore,
+        status: schema.scaleGames.status,
+        date: schema.scaleChallenges.date,
+      })
+      .from(schema.scaleGames)
+      .innerJoin(
+        schema.profiles,
+        eq(schema.scaleGames.userId, schema.profiles.id),
+      )
+      .innerJoin(
+        schema.scaleChallenges,
+        eq(schema.scaleGames.challengeId, schema.scaleChallenges.id),
+      )
+      .all();
+  })();
+
+  const byUser = new Map<
+    string,
+    {
+      userId: string;
+      displayName: string;
+      avatarUrl: string | null;
+      played: number;
+      totalScore: number;
+    }
+  >();
+
+  for (const g of games) {
+    if (g.status !== "COMPLETE") continue;
+    if (g.date < startDate || g.date > endDate) continue;
+    const cur = byUser.get(g.userId) ?? {
+      userId: g.userId,
+      displayName: g.displayName || "Trainer",
+      avatarUrl: g.avatarUrl,
+      played: 0,
+      totalScore: 0,
+    };
+    cur.played += 1;
+    cur.totalScore += g.totalScore;
+    byUser.set(g.userId, cur);
+  }
+
+  return [...byUser.values()]
+    .map((u) => ({
+      ...u,
+      avgScore: u.played ? Math.round(u.totalScore / u.played) : 0,
+    }))
+    .sort((a, b) => {
+      if (b.totalScore !== a.totalScore) return b.totalScore - a.totalScore;
+      return b.avgScore - a.avgScore;
+    })
+    .slice(0, limit);
 }
