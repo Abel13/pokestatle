@@ -2,11 +2,10 @@
 
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { Check, Copy, Frown, PartyPopper, Share2 } from "lucide-react";
+import { Frown, PartyPopper } from "lucide-react";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { ShareResultButton } from "@/components/game/share-result-button";
 import { StatusLegend } from "@/components/game/status-legend";
-import { trackShare } from "@/lib/analytics";
 import { calculateResultScore } from "@/lib/game/score";
 import { formatShareText, formatShareUrl } from "@/lib/game/share";
 import type { GuessResult } from "@/lib/game/types";
@@ -25,7 +24,6 @@ export function ResultScreen({
   revealed?: { id: number; name: string; sprite: string };
   date?: string;
 }) {
-  const [copied, setCopied] = useState(false);
   const [imageError, setImageError] = useState(false);
   const siteUrl =
     typeof window !== "undefined"
@@ -39,34 +37,6 @@ export function ResultScreen({
     siteUrl,
   );
   const resultScore = calculateResultScore(results, won, MAX_GUESSES);
-
-  async function copyToClipboard() {
-    await navigator.clipboard.writeText(share);
-    setCopied(true);
-    trackShare({ method: "clipboard", challengeId });
-    setTimeout(() => setCopied(false), 1600);
-  }
-
-  async function onShare() {
-    const isMobile =
-      typeof window !== "undefined" &&
-      window.matchMedia("(max-width: 639px)").matches;
-
-    if (isMobile && typeof navigator.share === "function") {
-      try {
-        await navigator.share({
-          title: "Pokéstatle: Guess them",
-          text: share,
-        });
-        trackShare({ method: "native", challengeId });
-        return;
-      } catch (err) {
-        if (err instanceof DOMException && err.name === "AbortError") return;
-      }
-    }
-
-    await copyToClipboard();
-  }
 
   return (
     <div className="mx-auto w-full max-w-md space-y-6 rounded-2xl border border-border/70 bg-background px-4 py-6 text-center sm:px-6">
@@ -151,29 +121,11 @@ export function ResultScreen({
         <StatusLegend className="max-w-[20rem] sm:max-w-none" />
       </div>
 
-      <Button
-        type="button"
-        size="lg"
-        className="h-12 w-full sm:h-10"
-        onClick={() => void onShare()}
-      >
-        {copied ? (
-          <Check className="size-4" />
-        ) : (
-          <>
-            <Share2 className="size-4 sm:hidden" />
-            <Copy className="hidden size-4 sm:block" />
-          </>
-        )}
-        {copied ? (
-          <span>Copied</span>
-        ) : (
-          <>
-            <span className="sm:hidden">Share</span>
-            <span className="hidden sm:inline">Share result</span>
-          </>
-        )}
-      </Button>
+      <ShareResultButton
+        text={share}
+        title="Pokéstatle: Guess them"
+        challengeId={challengeId}
+      />
     </div>
   );
 }

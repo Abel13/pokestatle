@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Check, Copy, LoaderCircle } from "lucide-react";
+import { LoaderCircle } from "lucide-react";
+import { ShareResultButton } from "@/components/game/share-result-button";
 import { SilhouetteCanvas } from "@/components/scale/silhouette-canvas";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -80,7 +81,6 @@ export function ScaleBoard({ date: dateProp }: { date?: string | null } = {}) {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
   const [roundFlash, setRoundFlash] = useState<ScaleRoundResult | null>(null);
   /** When set, canvas shows that completed pair's result. */
   const [reviewIndex, setReviewIndex] = useState<number | null>(null);
@@ -288,22 +288,19 @@ export function ScaleBoard({ date: dateProp }: { date?: string | null } = {}) {
     [state],
   );
 
-  async function copyShare() {
-    if (!state) return;
+  const shareText = useMemo(() => {
+    if (!state) return "";
     const origin =
       typeof window !== "undefined" ? window.location.origin : "";
     const siteUrl = origin
       ? formatResizeShareUrl(origin, state.date)
       : undefined;
-    const text = formatScaleShareText({
+    return formatScaleShareText({
       scores: state.rounds.map((r) => r.score),
       totalScore: state.totalScore,
       siteUrl,
     });
-    await navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1600);
-  }
+  }, [state]);
 
   if (loading) {
     return (
@@ -615,22 +612,12 @@ export function ScaleBoard({ date: dateProp }: { date?: string | null } = {}) {
                 · Resize them #{challenge.challengeId}
               </span>
             </p>
-            <Button
-              type="button"
-              size="lg"
-              className="mt-1 w-full max-w-md"
-              onClick={() => void copyShare()}
-            >
-              {copied ? (
-                <>
-                  <Check className="size-4" /> Copied
-                </>
-              ) : (
-                <>
-                  <Copy className="size-4" /> Share result
-                </>
-              )}
-            </Button>
+            <ShareResultButton
+              className="mx-auto mt-1 max-w-md"
+              text={shareText}
+              title="Pokéstatle: Resize them"
+              challengeId={challenge.challengeId}
+            />
           </div>
         </div>
       )}
