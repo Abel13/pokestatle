@@ -144,6 +144,25 @@ function ensureSchema(sqlite: Database.Database) {
       distribution_json TEXT NOT NULL DEFAULT '[0,0,0,0,0,0]',
       last_challenge_id INTEGER
     );
+
+    CREATE TABLE IF NOT EXISTS scale_challenges (
+      id INTEGER PRIMARY KEY,
+      date TEXT NOT NULL UNIQUE,
+      pairs_json TEXT NOT NULL DEFAULT '[]',
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS scale_games (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id TEXT NOT NULL REFERENCES profiles(id),
+      challenge_id INTEGER NOT NULL REFERENCES scale_challenges(id),
+      status TEXT NOT NULL,
+      rounds_json TEXT NOT NULL DEFAULT '[]',
+      total_score INTEGER NOT NULL DEFAULT 0,
+      completed_at TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      UNIQUE(user_id, challenge_id)
+    );
   `);
 
   ensurePokemonHintColumns(sqlite);

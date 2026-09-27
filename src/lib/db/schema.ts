@@ -98,5 +98,44 @@ export const userStats = sqliteTable("user_stats", {
   lastChallengeId: integer("last_challenge_id"),
 });
 
+export const scaleChallenges = sqliteTable(
+  "scale_challenges",
+  {
+    id: integer("id").primaryKey(),
+    date: text("date").notNull(),
+    pairsJson: text("pairs_json").notNull().default("[]"),
+    createdAt: text("created_at")
+      .notNull()
+      .default(sql`(datetime('now'))`),
+  },
+  (table) => [uniqueIndex("scale_challenges_date_idx").on(table.date)],
+);
+
+export const scaleGames = sqliteTable(
+  "scale_games",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => profiles.id),
+    challengeId: integer("challenge_id")
+      .notNull()
+      .references(() => scaleChallenges.id),
+    status: text("status").notNull(),
+    roundsJson: text("rounds_json").notNull().default("[]"),
+    totalScore: integer("total_score").notNull().default(0),
+    completedAt: text("completed_at"),
+    createdAt: text("created_at")
+      .notNull()
+      .default(sql`(datetime('now'))`),
+  },
+  (table) => [
+    uniqueIndex("scale_games_user_challenge_idx").on(
+      table.userId,
+      table.challengeId,
+    ),
+  ],
+);
+
 export type PokemonRow = typeof pokemon.$inferSelect;
 export type DailyChallengeRow = typeof dailyChallenges.$inferSelect;

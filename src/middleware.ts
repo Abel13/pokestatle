@@ -10,6 +10,8 @@ function isPublicApiPath(pathname: string): boolean {
   if (/^\/api\/challenges\/\d{4}-\d{2}-\d{2}$/.test(pathname)) return true;
   if (pathname.startsWith("/api/pokemon/")) return true;
   if (pathname.startsWith("/api/leaderboard/")) return true;
+  if (pathname === "/api/scale/today") return true;
+  if (pathname === "/api/scale/today/guess") return true;
   if (pathname.startsWith("/api/cron/")) return true;
   if (pathname.startsWith("/api/auth/")) return true;
   return false;

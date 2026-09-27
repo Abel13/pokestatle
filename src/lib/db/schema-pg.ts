@@ -118,10 +118,72 @@ export const userStats = pgTable("user_stats", {
   lastChallengeId: integer("last_challenge_id"),
 });
 
+export const scaleGameStatusEnum = pgEnum("scale_game_status", [
+  "PLAYING",
+  "COMPLETE",
+]);
+
+export const scaleChallenges = pgTable(
+  "scale_challenges",
+  {
+    id: integer("id").primaryKey(),
+    date: date("date").notNull(),
+    pairsJson: jsonb("pairs_json")
+      .notNull()
+      .$type<{ referenceId: number; targetId: number }[]>()
+      .default([]),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [uniqueIndex("scale_challenges_date_idx").on(table.date)],
+);
+
+export const scaleGames = pgTable(
+  "scale_games",
+  {
+    id: bigint("id", { mode: "number" })
+      .primaryKey()
+      .generatedByDefaultAsIdentity(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => profiles.id, { onDelete: "cascade" }),
+    challengeId: integer("challenge_id")
+      .notNull()
+      .references(() => scaleChallenges.id),
+    status: scaleGameStatusEnum("status").notNull(),
+    roundsJson: jsonb("rounds_json")
+      .notNull()
+      .$type<
+        {
+          roundIndex: number;
+          guessHeightDm: number;
+          realHeightDm: number;
+          score: number;
+          confirmedAt: string;
+        }[]
+      >()
+      .default([]),
+    totalScore: integer("total_score").notNull().default(0),
+    completedAt: timestamp("completed_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("scale_games_user_challenge_idx").on(
+      table.userId,
+      table.challengeId,
+    ),
+  ],
+);
+
 export const pgSchema = {
   pokemon,
   dailyChallenges,
   profiles,
   games,
   userStats,
+  scaleChallenges,
+  scaleGames,
 };

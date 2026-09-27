@@ -122,6 +122,10 @@ async function main() {
     process.cwd(),
     "supabase/migrations/20260917150000_pokemon_hint_columns.sql",
   );
+  const scaleMigrationPath = path.join(
+    process.cwd(),
+    "supabase/migrations/20260927150000_scale_mode.sql",
+  );
 
   const isLocal =
     url.includes("127.0.0.1") ||
@@ -144,6 +148,10 @@ async function main() {
 
   if (fs.existsSync(hintMigrationPath)) {
     await sql.unsafe(fs.readFileSync(hintMigrationPath, "utf8"));
+  }
+
+  if (fs.existsSync(scaleMigrationPath)) {
+    await sql.unsafe(fs.readFileSync(scaleMigrationPath, "utf8"));
   }
 
   const rows = loadSeedRows();
