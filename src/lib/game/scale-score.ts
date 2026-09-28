@@ -7,7 +7,8 @@ export function heightDmToMeters(dm: number): number {
 
 export function formatHeightMeters(dm: number): string {
   const m = heightDmToMeters(dm);
-  return `${m.toFixed(m >= 10 ? 1 : 2)} m`;
+  // Show cm precision (0.01 m) for resize guesses.
+  return `${m.toFixed(2)} m`;
 }
 
 /**

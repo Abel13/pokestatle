@@ -405,7 +405,11 @@ export function SilhouetteCanvas({
   }, [paint]);
 
   const clampHeight = useCallback(
-    (value: number) => Math.min(heightMax, Math.max(heightMin, Math.round(value))),
+    // 0.1 dm = 1 cm step (PokéAPI height unit is decimeters).
+    (value: number) => {
+      const stepped = Math.round(value * 10) / 10;
+      return Math.min(heightMax, Math.max(heightMin, stepped));
+    },
     [heightMin, heightMax],
   );
 

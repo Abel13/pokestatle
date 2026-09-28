@@ -26,8 +26,8 @@ import {
 } from "@/lib/game/scale-types";
 
 function heightBounds(referenceHeightDm: number) {
-  const min = Math.max(1, Math.round(referenceHeightDm * 0.05));
-  const max = Math.max(min + 1, Math.round(referenceHeightDm * 40));
+  const min = Math.max(0.1, Math.round(referenceHeightDm * 0.05 * 10) / 10);
+  const max = Math.max(min + 0.1, Math.round(referenceHeightDm * 40 * 10) / 10);
   return { min, max };
 }
 
