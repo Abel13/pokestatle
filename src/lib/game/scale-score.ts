@@ -12,8 +12,8 @@ export function formatHeightMeters(dm: number): string {
 }
 
 /**
- * Relative height error → 0–100.
- * 0% error = 100; ≥50% error = 0.
+ * Relative height error → 0–100 with exponential decay (k = 2).
+ * 0% error = 100; large errors asymptote toward 0 (no hard 50% cliff).
  */
 export function scoreScaleGuess(
   guessHeightDm: number,
@@ -22,7 +22,7 @@ export function scoreScaleGuess(
   if (!Number.isFinite(guessHeightDm) || guessHeightDm <= 0) return 0;
   if (!Number.isFinite(realHeightDm) || realHeightDm <= 0) return 0;
   const error = Math.abs(guessHeightDm - realHeightDm) / realHeightDm;
-  return Math.max(0, Math.min(100, Math.round(100 * (1 - error / 0.5))));
+  return Math.max(0, Math.min(100, Math.round(100 * Math.exp(-2 * error))));
 }
 
 export function letterGradeScale(totalScore: number): string {
