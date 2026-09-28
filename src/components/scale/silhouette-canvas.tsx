@@ -416,6 +416,7 @@ export function SilhouetteCanvas({
   const onHandlePointerDown = (e: ReactPointerEvent<HTMLButtonElement>) => {
     if (!interactive || !onGuessHeightChange) return;
     e.preventDefault();
+    e.stopPropagation();
     e.currentTarget.setPointerCapture(e.pointerId);
     dragRef.current = {
       startY: e.clientY,
@@ -425,6 +426,7 @@ export function SilhouetteCanvas({
 
   const onHandlePointerMove = (e: ReactPointerEvent<HTMLButtonElement>) => {
     if (!dragRef.current || !onGuessHeightChange) return;
+    e.preventDefault();
     const layout = layoutRef.current;
     if (!layout || layout.pxPerDm <= 0) return;
     const dy = dragRef.current.startY - e.clientY;
@@ -443,7 +445,7 @@ export function SilhouetteCanvas({
     <div
       ref={containerRef}
       className={cn(
-        "relative h-full w-full overflow-hidden rounded-[inherit] bg-muted/30",
+        "relative h-full w-full touch-none overflow-hidden overscroll-none rounded-[inherit] bg-muted/30",
         className,
       )}
     >
@@ -476,8 +478,8 @@ export function SilhouetteCanvas({
         <button
           type="button"
           aria-label="Drag to resize Pokémon"
-          className="absolute z-10 flex size-8 -translate-x-1/2 -translate-y-1/2 cursor-ns-resize items-center justify-center rounded-md border border-border bg-background text-teal-700 shadow-md dark:text-teal-300"
-          style={{ left: handlePos.x, top: handlePos.y }}
+          className="absolute z-10 flex size-8 -translate-x-1/2 -translate-y-1/2 touch-none cursor-ns-resize items-center justify-center rounded-md border border-border bg-background text-teal-700 shadow-md dark:text-teal-300"
+          style={{ left: handlePos.x, top: handlePos.y, touchAction: "none" }}
           onPointerDown={onHandlePointerDown}
           onPointerMove={onHandlePointerMove}
           onPointerUp={onHandlePointerUp}

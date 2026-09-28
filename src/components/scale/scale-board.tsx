@@ -360,7 +360,7 @@ export function ScaleBoard({ date: dateProp }: { date?: string | null } = {}) {
         "relative overflow-hidden rounded-2xl border border-border/70 bg-background shadow-sm",
         isComplete
           ? "h-[200px] w-full sm:h-[230px]"
-          : "h-[min(58vh,420px)] sm:h-[440px]",
+          : "h-[200px] w-full sm:h-[260px]",
       )}
     >
       <div className="h-full w-full">
