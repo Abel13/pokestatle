@@ -51,8 +51,11 @@ function ArchiveContent() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let cancelled = false;
+
     async function load() {
       setLoading(true);
+      setChallenges([]);
       try {
         const today = getChallengeDate();
         const epochDate = new Date(EPOCH_DATE);
@@ -75,6 +78,7 @@ function ArchiveContent() {
         if (mode === "guess") {
           try {
             const res = await fetch("/api/me/games");
+            if (cancelled) return;
             if (res.ok) {
               const data = await res.json();
               const gamesMap = new Map<string, GameFromAPI>(
@@ -100,6 +104,7 @@ function ArchiveContent() {
           const localMap = new Map(local.map((g) => [g.date, g]));
           try {
             const res = await fetch("/api/me/scale/games");
+            if (cancelled) return;
             if (res.ok) {
               const data = await res.json();
               for (const g of data.games as ScaleGameFromAPI[]) {
@@ -125,12 +130,16 @@ function ArchiveContent() {
           });
         }
 
+        if (cancelled) return;
         setChallenges(days.reverse());
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     }
     void load();
+    return () => {
+      cancelled = true;
+    };
   }, [mode]);
 
   const playHref = (date: string) =>

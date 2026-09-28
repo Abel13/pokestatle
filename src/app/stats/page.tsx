@@ -38,6 +38,8 @@ function StatsContent() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let cancelled = false;
+
     async function load() {
       setLoading(true);
       setStats(null);
@@ -45,6 +47,7 @@ function StatsContent() {
         if (mode === "guess") {
           try {
             const res = await fetch("/api/me/stats");
+            if (cancelled) return;
             if (res.ok) {
               const data = await res.json();
               setStats({ kind: "guess", ...data, source: "account" });
@@ -53,12 +56,14 @@ function StatsContent() {
           } catch {
             // local
           }
+          if (cancelled) return;
           setStats(mapLocalGuess(loadLocalStats()));
           return;
         }
 
         try {
           const res = await fetch("/api/me/scale/stats");
+          if (cancelled) return;
           if (res.ok) {
             const data = await res.json();
             setStats({ kind: "resize", ...data, source: "account" });
@@ -67,12 +72,16 @@ function StatsContent() {
         } catch {
           // local
         }
+        if (cancelled) return;
         setStats(mapLocalResize());
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     }
     void load();
+    return () => {
+      cancelled = true;
+    };
   }, [mode]);
 
   if (loading) {

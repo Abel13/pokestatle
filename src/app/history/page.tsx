@@ -36,6 +36,8 @@ function HistoryContent() {
   const [guestNote, setGuestNote] = useState<string | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
+
     async function load() {
       setLoading(true);
       setGuestNote(null);
@@ -44,6 +46,7 @@ function HistoryContent() {
       try {
         if (mode === "guess") {
           const res = await fetch("/api/me/history");
+          if (cancelled) return;
           if (res.ok) {
             const data = await res.json();
             setGuessItems(
@@ -64,6 +67,7 @@ function HistoryContent() {
         }
 
         const res = await fetch("/api/me/scale/history");
+        if (cancelled) return;
         if (res.ok) {
           const data = await res.json();
           setResizeItems(
@@ -96,12 +100,17 @@ function HistoryContent() {
           );
         }
       } catch {
-        setGuestNote("Sign in with Google to view history.");
+        if (!cancelled) {
+          setGuestNote("Sign in with Google to view history.");
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     }
     void load();
+    return () => {
+      cancelled = true;
+    };
   }, [mode]);
 
   return (

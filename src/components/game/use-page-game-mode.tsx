@@ -9,6 +9,11 @@ import {
   savePreferredGameMode,
 } from "@/lib/game/modes";
 
+function initialMode(param: string | null): GameMode {
+  if (param === "resize" || param === "guess") return param;
+  return loadPreferredGameMode();
+}
+
 export function usePageGameMode(): {
   mode: GameMode;
   setMode: (mode: GameMode) => void;
@@ -18,8 +23,8 @@ export function usePageGameMode(): {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const param = searchParams?.get("mode");
-  const [mode, setModeState] = useState<GameMode>(
-    param === "resize" || param === "guess" ? param : "guess",
+  const [mode, setModeState] = useState<GameMode>(() =>
+    initialMode(param ?? null),
   );
 
   useEffect(() => {
@@ -34,7 +39,7 @@ export function usePageGameMode(): {
     if (qs.get("mode") === preferred) return;
     qs.set("mode", preferred);
     router.replace(`${pathname}?${qs.toString()}`);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- sync once from URL/preference
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- sync from URL/preference
   }, [param, pathname]);
 
   const setMode = useCallback(
