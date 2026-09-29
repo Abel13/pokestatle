@@ -13,7 +13,10 @@ import { cn } from "@/lib/utils";
 
 const MOBILE_MQ = "(max-width: 639px)";
 
-function touchDistance(a: Touch, b: Touch) {
+function touchDistance(
+  a: { clientX: number; clientY: number },
+  b: { clientX: number; clientY: number },
+) {
   return Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
 }
 
