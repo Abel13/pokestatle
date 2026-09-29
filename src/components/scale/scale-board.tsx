@@ -86,9 +86,7 @@ export function ScaleBoard({ date: dateProp }: { date?: string | null } = {}) {
   const [reviewIndex, setReviewIndex] = useState<number | null>(null);
 
   const dateQuery =
-    dateProp && /^\d{4}-\d{2}-\d{2}$/.test(dateProp)
-      ? `?date=${dateProp}`
-      : "";
+    dateProp && /^\d{4}-\d{2}-\d{2}$/.test(dateProp) ? `?date=${dateProp}` : "";
 
   const currentIndex = state?.rounds.length ?? 0;
   const isComplete = state?.status === "COMPLETE";
@@ -216,7 +214,12 @@ export function ScaleBoard({ date: dateProp }: { date?: string | null } = {}) {
   }, [displayRound]);
 
   useEffect(() => {
-    if (!displayRound || roundFlash || reviewIndex != null || displayRound.result)
+    if (
+      !displayRound ||
+      roundFlash ||
+      reviewIndex != null ||
+      displayRound.result
+    )
       return;
     setGuessHeightDm((prev) => {
       const { min, max } = heightBounds(displayRound.reference.heightDm);
@@ -290,8 +293,7 @@ export function ScaleBoard({ date: dateProp }: { date?: string | null } = {}) {
 
   const shareText = useMemo(() => {
     if (!state) return "";
-    const origin =
-      typeof window !== "undefined" ? window.location.origin : "";
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
     const siteUrl = origin
       ? formatResizeShareUrl(origin, state.date)
       : undefined;
@@ -419,9 +421,7 @@ export function ScaleBoard({ date: dateProp }: { date?: string | null } = {}) {
               </dd>
             </div>
           </dl>
-          <p className="mt-2 text-xs text-muted-foreground">
-            Off by {offPct}%
-          </p>
+          <p className="mt-2 text-xs text-muted-foreground">Off by {offPct}%</p>
         </div>
       ) : null}
     </div>
@@ -509,10 +509,6 @@ export function ScaleBoard({ date: dateProp }: { date?: string | null } = {}) {
                 <span className="font-semibold text-teal-700 dark:text-teal-300">
                   {displayRound.reference.name}
                 </span>
-                <span className="text-muted-foreground">
-                  {" "}
-                  ({formatHeightMeters(displayRound.reference.heightDm)})
-                </span>
               </p>
               <p>
                 <span className="font-semibold text-sky-700 dark:text-sky-300">
@@ -522,7 +518,12 @@ export function ScaleBoard({ date: dateProp }: { date?: string | null } = {}) {
                   {viewingResult ? (
                     <> — your guess vs actual size</>
                   ) : (
-                    <> ({formatHeightMeters(guessHeightDm)} — drag the handle)</>
+                    <>
+                      {" "}
+                      —{" "}
+                      <span className="sm:hidden">pinch to resize</span>
+                      <span className="hidden sm:inline">drag the handle</span>
+                    </>
                   )}
                 </span>
               </p>
@@ -607,10 +608,7 @@ export function ScaleBoard({ date: dateProp }: { date?: string | null } = {}) {
               <span className="font-semibold text-foreground">
                 {letterGradeScale(state.totalScore)}
               </span>
-              <span>
-                {" "}
-                · Resize them #{challenge.challengeId}
-              </span>
+              <span> · Resize them #{challenge.challengeId}</span>
             </p>
             <ShareResultButton
               className="mx-auto mt-1 max-w-md"

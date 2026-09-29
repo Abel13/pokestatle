@@ -6,9 +6,16 @@ import {
   useRef,
   useState,
   type PointerEvent as ReactPointerEvent,
+  type TouchEvent as ReactTouchEvent,
 } from "react";
 import { MoveDiagonal, ZoomIn, ZoomOut } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+const MOBILE_MQ = "(max-width: 639px)";
+
+function touchDistance(a: Touch, b: Touch) {
+  return Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+}
 
 type SilhouetteSprite = {
   src: string;
@@ -218,6 +225,7 @@ export function SilhouetteCanvas({
   const containerRef = useRef<HTMLDivElement>(null);
   const layoutRef = useRef<LayoutHit | null>(null);
   const [zoom, setZoom] = useState(1);
+  const [isMobile, setIsMobile] = useState(false);
   const [handlePos, setHandlePos] = useState<{ x: number; y: number } | null>(
     null,
   );
@@ -225,6 +233,13 @@ export function SilhouetteCanvas({
     startY: number;
     startHeight: number;
   } | null>(null);
+  const pinchRef = useRef<{
+    startDist: number;
+    startHeight: number;
+  } | null>(null);
+  const guessHeightRef = useRef(guessHeightDm);
+  guessHeightRef.current = guessHeightDm;
+  const isMobileRef = useRef(false);
 
   const paint = useCallback(async () => {
     const canvas = canvasRef.current;
@@ -357,7 +372,7 @@ export function SilhouetteCanvas({
         guessDrawW: guessGeom.drawWidth,
       };
 
-      if (interactive) {
+      if (interactive && !isMobile) {
         setHandlePos({
           x: Math.min(
             cssWidth - 20,
@@ -378,6 +393,7 @@ export function SilhouetteCanvas({
     guessHeightDm,
     zoom,
     interactive,
+    isMobile,
   ]);
 
   // Reset zoom when entering/leaving result reveal so auto-fit starts clean.
@@ -387,6 +403,18 @@ export function SilhouetteCanvas({
   useEffect(() => {
     setZoom(1);
   }, [revealKey]);
+
+  useEffect(() => {
+    const mq = window.matchMedia(MOBILE_MQ);
+    const sync = () => {
+      const matches = mq.matches;
+      isMobileRef.current = matches;
+      setIsMobile(matches);
+    };
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
 
   useEffect(() => {
     void paint();
@@ -414,7 +442,7 @@ export function SilhouetteCanvas({
   );
 
   const onHandlePointerDown = (e: ReactPointerEvent<HTMLButtonElement>) => {
-    if (!interactive || !onGuessHeightChange) return;
+    if (!interactive || !onGuessHeightChange || isMobile) return;
     e.preventDefault();
     e.stopPropagation();
     e.currentTarget.setPointerCapture(e.pointerId);
@@ -441,6 +469,41 @@ export function SilhouetteCanvas({
     dragRef.current = null;
   };
 
+  const onPinchTouchStart = (e: ReactTouchEvent<HTMLDivElement>) => {
+    if (!interactive || !onGuessHeightChange || !isMobileRef.current) return;
+    if (e.touches.length < 2) {
+      pinchRef.current = null;
+      return;
+    }
+    const a = e.touches.item(0);
+    const b = e.touches.item(1);
+    if (!a || !b) return;
+    const dist = touchDistance(a, b);
+    if (dist <= 0) return;
+    pinchRef.current = {
+      startDist: dist,
+      startHeight: guessHeightRef.current,
+    };
+  };
+
+  const onPinchTouchMove = (e: ReactTouchEvent<HTMLDivElement>) => {
+    if (!pinchRef.current || !onGuessHeightChange) return;
+    if (e.touches.length < 2) return;
+    const a = e.touches.item(0);
+    const b = e.touches.item(1);
+    if (!a || !b) return;
+    const dist = touchDistance(a, b);
+    if (pinchRef.current.startDist <= 0) return;
+    const ratio = dist / pinchRef.current.startDist;
+    onGuessHeightChange(clampHeight(pinchRef.current.startHeight * ratio));
+  };
+
+  const onPinchTouchEnd = (e: ReactTouchEvent<HTMLDivElement>) => {
+    if (e.touches.length < 2) {
+      pinchRef.current = null;
+    }
+  };
+
   return (
     <div
       ref={containerRef}
@@ -448,6 +511,10 @@ export function SilhouetteCanvas({
         "relative h-full w-full touch-none overflow-hidden overscroll-none rounded-[inherit] bg-muted/30",
         className,
       )}
+      onTouchStart={onPinchTouchStart}
+      onTouchMove={onPinchTouchMove}
+      onTouchEnd={onPinchTouchEnd}
+      onTouchCancel={onPinchTouchEnd}
     >
       <canvas
         ref={canvasRef}
@@ -474,7 +541,7 @@ export function SilhouetteCanvas({
         </button>
       </div>
 
-      {interactive && handlePos ? (
+      {interactive && !isMobile && handlePos ? (
         <button
           type="button"
           aria-label="Drag to resize Pokémon"
