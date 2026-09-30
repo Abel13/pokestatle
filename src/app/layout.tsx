@@ -17,6 +17,7 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://www.pokestatle.today"),
   title: "PokéStatle — Daily Pokémon Guessing",
   description:
     "Guess the daily Pokémon using type, generation, height, weight, and base stats feedback.",
@@ -29,7 +30,16 @@ export const metadata: Metadata = {
     title: "PokéStatle — Daily Pokémon Guessing",
     description:
       "Guess the daily Pokémon using type, generation, height, weight, and base stats feedback.",
-    images: [{ url: "/logo.png", width: 512, height: 512, alt: "PokéStatle" }],
+    images: [
+      { url: "/logo-192.png", width: 192, height: 192, alt: "PokéStatle" },
+    ],
+  },
+  twitter: {
+    card: "summary",
+    title: "PokéStatle — Daily Pokémon Guessing",
+    description:
+      "Guess the daily Pokémon using type, generation, height, weight, and base stats feedback.",
+    images: ["/logo-192.png"],
   },
 };
 
