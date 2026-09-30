@@ -395,7 +395,7 @@ export function ScaleBoard({ date: dateProp }: { date?: string | null } = {}) {
 
       {/* Metadata after Lock In — score counts up from 0. */}
       {viewingResult && activeResult && (!showFinalCard || roundFlash) ? (
-        <div className="pointer-events-none absolute top-3 left-3 z-20 max-w-[min(100%,15.5rem)] animate-in fade-in-0 zoom-in-95 duration-300 rounded-xl border border-border/60 bg-background/95 px-3.5 py-3 shadow-md backdrop-blur-sm">
+        <div className="pointer-events-none absolute top-3 left-3 z-20 max-w-[min(100%,15.5rem)] animate-in fade-in-0 zoom-in-95 duration-300 rounded-xl border border-border/40 bg-background/45 px-3.5 py-3 shadow-sm backdrop-blur-md supports-[backdrop-filter]:bg-background/35">
           <p className="font-heading text-2xl font-semibold tabular-nums tracking-tight text-teal-700 dark:text-teal-300">
             {roundFlash ? animatedLockInScore : activeResult.score}{" "}
             <span className="text-base font-medium text-muted-foreground">
