@@ -16,18 +16,16 @@ export function ResultScreen({
   challengeId,
   results,
   revealed,
-  date,
 }: {
   won: boolean;
   challengeId: number;
   results: GuessResult[];
   revealed?: { id: number; name: string; sprite: string };
-  date?: string;
 }) {
   const [imageError, setImageError] = useState(false);
   const siteUrl =
     typeof window !== "undefined"
-      ? formatShareUrl(window.location.origin, date)
+      ? formatShareUrl(window.location.origin)
       : "";
   const share = formatShareText(
     challengeId,

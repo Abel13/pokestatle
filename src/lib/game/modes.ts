@@ -54,14 +54,12 @@ export function savePreferredGameMode(mode: GameMode) {
   }
 }
 
-/** Share URL: `https://host/resize-them/?2026-09-27` (date as bare query). */
-export function formatResizeShareUrl(origin: string, date: string): string {
-  const base = origin.replace(/\/$/, "");
-  return `${base}/resize-them/?${date}`;
+/** Share URL for Resize them (today’s play page, no date). */
+export function formatResizeShareUrl(origin: string): string {
+  return `${origin.replace(/\/$/, "")}/resize-them`;
 }
 
-export function formatGuessShareUrl(origin: string, date?: string): string {
-  const base = origin.replace(/\/$/, "");
-  if (!date) return base;
-  return `${base}/?date=${date}`;
+/** Share URL for Guess them (today’s play page, no date). */
+export function formatGuessShareUrl(origin: string): string {
+  return origin.replace(/\/$/, "");
 }

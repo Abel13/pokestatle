@@ -294,9 +294,7 @@ export function ScaleBoard({ date: dateProp }: { date?: string | null } = {}) {
   const shareText = useMemo(() => {
     if (!state) return "";
     const origin = typeof window !== "undefined" ? window.location.origin : "";
-    const siteUrl = origin
-      ? formatResizeShareUrl(origin, state.date)
-      : undefined;
+    const siteUrl = origin ? formatResizeShareUrl(origin) : undefined;
     return formatScaleShareText({
       scores: state.rounds.map((r) => r.score),
       totalScore: state.totalScore,
