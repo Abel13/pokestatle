@@ -54,7 +54,7 @@ export function ResultScreen({
         </h2>
         <p className="text-sm text-muted-foreground">
           {won
-            ? `Solved in ${results.length}/${MAX_GUESSES}.`
+            ? `Solved in ${results.length} ${results.length === 1 ? "guess" : "guesses"}.`
             : "Better luck tomorrow — same Pokémon for everyone."}
         </p>
       </div>

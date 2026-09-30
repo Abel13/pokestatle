@@ -58,10 +58,9 @@ export function formatShareText(
   const textParts = [
     "Pokéstatle: Guess them",
     ...lines,
-    attempts,
-    grade,
+    `${attempts} · ${grade}`,
   ];
-  
+
   if (siteUrl) {
     textParts.push("", siteUrl);
   }
