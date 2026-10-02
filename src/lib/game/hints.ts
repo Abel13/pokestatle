@@ -61,6 +61,14 @@ export function isHintUnlocked(kind: HintKind, unlockCount: number): boolean {
   return unlockCount >= HINT_UNLOCK_AT[kind];
 }
 
+export const HINT_KINDS = Object.keys(HINT_UNLOCK_AT) as HintKind[];
+
+/** Hints visible when submitting guess `guessNumber` (1-based, still playing). */
+export function hintsUnlockedBeforeGuess(guessNumber: number): number {
+  const unlockCount = Math.max(0, guessNumber - 1);
+  return HINT_KINDS.filter((kind) => isHintUnlocked(kind, unlockCount)).length;
+}
+
 export interface GenerationHint {
   generation: number;
   roman: string;

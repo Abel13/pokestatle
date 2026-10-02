@@ -1,3 +1,4 @@
+import { hintsUnlockedBeforeGuess } from "./hints";
 import type {
   AttributeResult,
   GuessAttributes,
@@ -10,7 +11,7 @@ const STATUS_POINTS: Record<MatchStatus, number> = {
   EXACT: 4,
   VERY_CLOSE: 3,
   CLOSE: 2,
-  FAR: 0,
+  FAR: 1,
 };
 
 /** Points available per guess (10 attributes × 4). */
@@ -50,9 +51,9 @@ export type ResultScore = {
   score: number;
   /** Letter band for display. */
   grade: "S" | "A" | "B" | "C" | "D" | "F";
-  /** Guess-count efficiency slice (0–70 when won, else 0). */
+  /** Guess-count efficiency slice (42–100 when won, else 0). */
   efficiency: number;
-  /** Clue-quality slice from guesses (0–30 win, 0–40 loss). */
+  /** Clue-quality bonus from misses (0–12 win, 0–50 loss). */
   accuracy: number;
 };
 
@@ -66,11 +67,54 @@ function letterGrade(score: number): ResultScore["grade"] {
 }
 
 /**
+ * Generation-only rounds (guesses 1–2) do not count against accuracy:
+ * types / evolution / colors are still locked, and generation is already
+ * constrained by search.
+ *
+ * Later misses (types hint onward) still blend best + average.
+ * Winning before any extra hint unlocks credits most of the accuracy bonus.
+ */
+function informedClueQuality(results: GuessResult[]): number {
+  if (results.length === 0) return 0;
+
+  const judged: number[] = [];
+  results.forEach((result, index) => {
+    const hintCount = hintsUnlockedBeforeGuess(index + 1);
+    if (hintCount <= 1) return;
+    judged.push(guessQuality(result));
+  });
+
+  if (judged.length === 0) return 0.75;
+
+  const avg = judged.reduce((sum, q) => sum + q, 0) / judged.length;
+  const best = Math.max(...judged);
+  return 0.5 * best + 0.5 * avg;
+}
+
+const WIN_ACCURACY_MAX = 12;
+const LAST_GUESS_WIN_EFFICIENCY = 42;
+
+/**
+ * Almost all of a win score is how few guesses it took.
+ * 6 guesses → 100, 88, 77, 65, 54, 42 so a 2-guess win is A even
+ * if the first miss was a shot in the dark (types hint is still locked).
+ */
+function winEfficiency(guessCount: number, maxGuesses: number): number {
+  if (guessCount <= 1) return 100;
+  if (maxGuesses <= 1) return 100;
+  const t = Math.min(guessCount, maxGuesses);
+  return Math.round(
+    100 -
+      ((t - 1) / (maxGuesses - 1)) * (100 - LAST_GUESS_WIN_EFFICIENCY),
+  );
+}
+
+/**
  * Score a finished run.
  *
- * Win: up to 70 from solving early + up to 30 from how close earlier guesses were.
- * First-try win is always 100.
- * Loss: up to 40 from average clue quality across all guesses.
+ * Win: 42–100 from guess count + up to 12 from informed misses.
+ * Guesses 1–2 (generation hint only) are not judged. A 2-guess win is ~97 S.
+ * Loss: up to 50 from clue quality on rounds that had extra hints.
  */
 export function calculateResultScore(
   results: GuessResult[],
@@ -83,15 +127,10 @@ export function calculateResultScore(
 
   if (won) {
     const n = results.length;
-    if (n === 1) {
-      return { score: 100, grade: "S", efficiency: 70, accuracy: 30 };
-    }
-
-    const efficiency = Math.round(((maxGuesses - n + 1) / maxGuesses) * 70);
-    const prior = results.slice(0, -1);
-    const avgQuality =
-      prior.reduce((sum, r) => sum + guessQuality(r), 0) / prior.length;
-    const accuracy = Math.round(avgQuality * 30);
+    const efficiency = winEfficiency(n, maxGuesses);
+    const accuracy = Math.round(
+      informedClueQuality(results.slice(0, -1)) * WIN_ACCURACY_MAX,
+    );
     const score = Math.min(100, efficiency + accuracy);
 
     return {
@@ -102,9 +141,7 @@ export function calculateResultScore(
     };
   }
 
-  const avgQuality =
-    results.reduce((sum, r) => sum + guessQuality(r), 0) / results.length;
-  const accuracy = Math.round(avgQuality * 40);
+  const accuracy = Math.round(informedClueQuality(results) * 50);
   const score = accuracy;
 
   return {
