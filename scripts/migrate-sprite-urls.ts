@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { getSqliteDb, schema } from "../src/lib/db";
-import { getPgDb, pgSchema, usePostgres } from "../src/lib/db";
+import { getPgDb, pgSchema, hasPostgresDatabase } from "../src/lib/db";
 import { convertGitHubUrlToJsDelivr } from "../src/lib/pokemon/sprite-url";
 import { eq } from "drizzle-orm";
 
@@ -10,7 +10,7 @@ async function migrateSprites() {
   let updated = 0;
   let skipped = 0;
 
-  if (usePostgres()) {
+  if (hasPostgresDatabase()) {
     console.log("Using PostgreSQL/Supabase database");
     const db = getPgDb();
     const pokemon = await db.select().from(pgSchema.pokemon);

@@ -4,7 +4,7 @@ import {
   getSqliteDb,
   pgSchema,
   schema,
-  usePostgres,
+  hasPostgresDatabase,
 } from "@/lib/db";
 import {
   challengeIdFromDate,
@@ -73,7 +73,7 @@ function mapPokemon(row: {
     evolvesFrom: row.evolvesFrom,
     evolutionStage: row.evolutionStage,
     evolutionLineLength: row.evolutionLineLength ?? 1,
-    sprite: resolveSpriteUrl(row.id, row.sprite),
+    sprite: resolveSpriteUrl(row.id),
     difficulty: row.difficulty as Difficulty,
     types: parseTypes(row.typesJson),
     primaryColor: row.primaryColor ?? null,
@@ -96,7 +96,7 @@ export async function getCachedPokemonPool(): Promise<{ id: number; difficulty: 
   const cached = pokemonPoolCache.get(CACHE_KEY);
   if (cached) return cached;
 
-  if (usePostgres()) {
+  if (hasPostgresDatabase()) {
     const pool = await getPgDb()
       .select({
         id: pgSchema.pokemon.id,
@@ -141,7 +141,7 @@ export async function createDailyChallenge(date: string) {
   const pokemonId = pickDailyPokemonId(date, ids, getSecretSalt());
   const id = challengeIdFromDate(date);
 
-  if (usePostgres()) {
+  if (hasPostgresDatabase()) {
     const db = getPgDb();
     await db
       .insert(pgSchema.dailyChallenges)
@@ -193,7 +193,7 @@ export async function createDailyChallenge(date: string) {
  * Returns null if challenge doesn't exist
  */
 export async function getChallenge(date: string) {
-  if (usePostgres()) {
+  if (hasPostgresDatabase()) {
     const db = getPgDb();
     const existing = await db
       .select()
@@ -213,7 +213,7 @@ export async function getChallenge(date: string) {
 }
 
 export async function listPoolPokemon(): Promise<PokemonRecord[]> {
-  if (usePostgres()) {
+  if (hasPostgresDatabase()) {
     const rows = await getPgDb().select().from(pgSchema.pokemon);
     return rows.map(mapPokemon);
   }
@@ -223,7 +223,7 @@ export async function listPoolPokemon(): Promise<PokemonRecord[]> {
 export async function getPokemonById(
   id: number,
 ): Promise<PokemonRecord | null> {
-  if (usePostgres()) {
+  if (hasPostgresDatabase()) {
     const rows = await getPgDb()
       .select()
       .from(pgSchema.pokemon)
@@ -248,7 +248,7 @@ export async function searchPokemon(
   if (!q) return [];
   const pattern = `%${q}%`;
 
-  if (usePostgres()) {
+  if (hasPostgresDatabase()) {
     const nameMatch = or(
       sql`lower(${pgSchema.pokemon.name}) like ${pattern}`,
       sql`lower(${pgSchema.pokemon.slug}) like ${pattern}`,
@@ -265,7 +265,7 @@ export async function searchPokemon(
     return rows.map((p) => ({
       id: p.id,
       name: p.name,
-      sprite: resolveSpriteUrl(p.id, p.sprite),
+      sprite: resolveSpriteUrl(p.id),
       types: parseTypes(p.typesJson),
     }));
   }
@@ -287,7 +287,7 @@ export async function searchPokemon(
   return rows.map((p) => ({
     id: p.id,
     name: p.name,
-    sprite: resolveSpriteUrl(p.id, p.sprite),
+    sprite: resolveSpriteUrl(p.id),
     types: parseTypes(p.typesJson),
   }));
 }
@@ -319,7 +319,7 @@ export async function getPoolSize(): Promise<number> {
   if (cached !== null) return cached;
 
   let count: number;
-  if (usePostgres()) {
+  if (hasPostgresDatabase()) {
     const result = await getPgDb()
       .select({ count: sql<number>`count(*)::int` })
       .from(pgSchema.pokemon);

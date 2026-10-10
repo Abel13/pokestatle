@@ -24,7 +24,6 @@ export function getSpriteUrl(pokemonId: number, artwork = true): string {
  */
 export function resolveSpriteUrl(
   pokemonId: number,
-  _stored?: string | null,
 ): string {
   return getSpriteUrl(pokemonId);
 }

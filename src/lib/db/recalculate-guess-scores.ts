@@ -4,7 +4,7 @@ import {
   getSqliteDb,
   pgSchema,
   schema,
-  usePostgres,
+  hasPostgresDatabase,
 } from "@/lib/db";
 import { calculateResultScore } from "@/lib/game/score";
 import { MAX_GUESSES, type GuessResult } from "@/lib/game/types";
@@ -59,7 +59,7 @@ export async function recalculateFinishedGuessScores(options?: {
     errorDetails: [],
   };
 
-  if (usePostgres()) {
+  if (hasPostgresDatabase()) {
     const db = getPgDb();
     const rows = await db
       .select({

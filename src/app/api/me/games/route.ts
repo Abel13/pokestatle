@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { usePostgres, getPgDb, getSqliteDb, pgSchema, schema } from "@/lib/db";
+import { hasPostgresDatabase, getPgDb, getSqliteDb, pgSchema, schema } from "@/lib/db";
 import { eq } from "drizzle-orm";
 
 export const runtime = "nodejs";
@@ -21,7 +21,7 @@ export async function GET() {
       return NextResponse.json({ games: [] });
     }
 
-    if (usePostgres()) {
+    if (hasPostgresDatabase()) {
       const db = getPgDb();
       const games = await db
         .select({

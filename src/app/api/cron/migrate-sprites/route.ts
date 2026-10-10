@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import postgres from "postgres";
-import { getDatabaseUrl, usePostgres } from "@/lib/db";
+import { getDatabaseUrl, hasPostgresDatabase } from "@/lib/db";
 import { SPRITE_URL_PREFIXES } from "@/lib/pokemon/sprite-url";
 
 export const runtime = "nodejs";
@@ -30,7 +30,7 @@ export async function GET() {
       );
     }
 
-    if (!usePostgres()) {
+    if (!hasPostgresDatabase()) {
       return NextResponse.json({
         success: false,
         error: "Postgres is not configured in this environment",

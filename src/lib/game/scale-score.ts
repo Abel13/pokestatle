@@ -11,9 +11,13 @@ export function formatHeightMeters(dm: number): string {
   return `${m.toFixed(2)} m`;
 }
 
+const PERFECT_SCORE_TOLERANCE = 0.05;
+
 /**
  * Relative height error → 0–100 with exponential decay (k = 2).
- * 0% error = 100; large errors asymptote toward 0 (no hard 50% cliff).
+ * Guesses within 5% of the real height count as perfect, so near misses are
+ * not penalized. Beyond that margin, the score decays smoothly without a hard
+ * cliff.
  */
 export function scoreScaleGuess(
   guessHeightDm: number,
@@ -22,7 +26,11 @@ export function scoreScaleGuess(
   if (!Number.isFinite(guessHeightDm) || guessHeightDm <= 0) return 0;
   if (!Number.isFinite(realHeightDm) || realHeightDm <= 0) return 0;
   const error = Math.abs(guessHeightDm - realHeightDm) / realHeightDm;
-  return Math.max(0, Math.min(100, Math.round(100 * Math.exp(-2 * error))));
+  const penalizedError = Math.max(0, error - PERFECT_SCORE_TOLERANCE);
+  return Math.max(
+    0,
+    Math.min(100, Math.round(100 * Math.exp(-2 * penalizedError))),
+  );
 }
 
 export function letterGradeScale(totalScore: number): string {

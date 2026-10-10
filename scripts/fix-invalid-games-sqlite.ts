@@ -15,6 +15,14 @@ if (!existsSync(dbPath)) {
 
 const db = new Database(dbPath);
 
+type InvalidGame = {
+  id: number;
+  status: string;
+  guesses_json: string;
+  results_json: string;
+  completed_at: string | null;
+};
+
 try {
   console.log("🔍 Buscando jogos com mais de 6 palpites...");
 
@@ -31,7 +39,7 @@ try {
       FROM games
       WHERE json_array_length(guesses_json) > 6`
     )
-    .all();
+    .all() as InvalidGame[];
 
   console.log(`\n📊 Encontrados ${invalidGames.length} jogos inválidos\n`);
 
@@ -41,9 +49,8 @@ try {
   }
 
   // Mostrar detalhes dos jogos inválidos
-  invalidGames.forEach((game: any) => {
+  invalidGames.forEach((game) => {
     const guesses = JSON.parse(game.guesses_json);
-    const results = JSON.parse(game.results_json);
     console.log(
       `  Game ID ${game.id}: ${guesses.length} palpites, status: ${game.status}`
     );
@@ -64,7 +71,7 @@ try {
   let fixed = 0;
 
   db.transaction(() => {
-    for (const game of invalidGames as any[]) {
+    for (const game of invalidGames) {
       const guesses = JSON.parse(game.guesses_json);
       const results = JSON.parse(game.results_json);
 

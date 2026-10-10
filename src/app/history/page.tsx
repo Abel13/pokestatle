@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { History } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -29,6 +30,7 @@ type ResizeItem = {
 };
 
 function HistoryContent() {
+  const router = useRouter();
   const { mode, ModeTabs } = usePageGameMode();
   const [guessItems, setGuessItems] = useState<GuessItem[]>([]);
   const [resizeItems, setResizeItems] = useState<ResizeItem[]>([]);
@@ -142,7 +144,7 @@ function HistoryContent() {
               key={item.challengeId}
               className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/70 bg-background/70 px-4 py-3 transition-colors hover:border-teal-500/50 hover:bg-teal-500/5"
               onClick={() => {
-                window.location.href = `/?date=${item.date}`;
+                router.push(`/?date=${item.date}`);
               }}
             >
               <div>
@@ -175,7 +177,7 @@ function HistoryContent() {
               key={item.challengeId}
               className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/70 bg-background/70 px-4 py-3 transition-colors hover:border-teal-500/50 hover:bg-teal-500/5"
               onClick={() => {
-                window.location.href = `/resize-them/?${item.date}`;
+                router.push(`/resize-them/?${item.date}`);
               }}
             >
               <div>

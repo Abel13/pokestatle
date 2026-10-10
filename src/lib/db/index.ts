@@ -61,7 +61,7 @@ export function getDatabaseUrl(): string | undefined {
   );
 }
 
-export function usePostgres(): boolean {
+export function hasPostgresDatabase(): boolean {
   return Boolean(getDatabaseUrl());
 }
 
@@ -221,9 +221,9 @@ export function getPgDb(): PgDb {
   return pgCached;
 }
 
-/** @deprecated Prefer getSqliteDb / getPgDb / usePostgres(). Kept for local scripts. */
+/** @deprecated Prefer getSqliteDb / getPgDb / hasPostgresDatabase(). Kept for local scripts. */
 export function getDb() {
-  if (usePostgres()) return getPgDb();
+  if (hasPostgresDatabase()) return getPgDb();
   return getSqliteDb();
 }
 

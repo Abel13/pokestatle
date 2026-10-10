@@ -4,7 +4,7 @@ import {
   getSqliteDb,
   pgSchema,
   schema,
-  usePostgres,
+  hasPostgresDatabase,
 } from "@/lib/db";
 import type { GameStatus, GuessResult } from "@/lib/game/types";
 import { MAX_GUESSES } from "@/lib/game/types";
@@ -113,7 +113,7 @@ export async function ensureProfile(input: {
   displayName: string;
   avatarUrl: string | null;
 }) {
-  if (usePostgres()) {
+  if (hasPostgresDatabase()) {
     const db = getPgDb();
     const existing = await db
       .select()
@@ -167,7 +167,7 @@ export async function persistGuessForUser(input: {
 }) {
   await ensureProfile(input);
 
-  if (usePostgres()) {
+  if (hasPostgresDatabase()) {
     const db = getPgDb();
     const existingRows = await db
       .select()
@@ -346,7 +346,7 @@ async function updateStatsOnComplete(input: {
   won: boolean;
   guessCount: number;
 }) {
-  if (usePostgres()) {
+  if (hasPostgresDatabase()) {
     const db = getPgDb();
     const statsRows = await db
       .select()
@@ -466,7 +466,7 @@ export async function getUserGameProgress(
   userId: string,
   challengeId: number,
 ): Promise<{ guessCount: number; status: GameStatus } | null> {
-  if (usePostgres()) {
+  if (hasPostgresDatabase()) {
     const rows = await getPgDb()
       .select()
       .from(pgSchema.games)
@@ -501,7 +501,7 @@ export async function getUserGameProgress(
 }
 
 export async function getUserStats(userId: string) {
-  if (usePostgres()) {
+  if (hasPostgresDatabase()) {
     const rows = await getPgDb()
       .select()
       .from(pgSchema.userStats)
@@ -557,7 +557,7 @@ export async function getUserStats(userId: string) {
 }
 
 export async function getUserHistory(userId: string, limit = 30) {
-  if (usePostgres()) {
+  if (hasPostgresDatabase()) {
     const rows = await getPgDb()
       .select({
         challengeId: pgSchema.games.challengeId,
@@ -618,7 +618,7 @@ export async function getUserHistory(userId: string, limit = 30) {
 }
 
 export async function getTodayLeaderboard(challengeId: number, limit = 20) {
-  if (usePostgres()) {
+  if (hasPostgresDatabase()) {
     const rows = await getPgDb()
       .select({
         userId: pgSchema.games.userId,
@@ -724,7 +724,7 @@ export async function getMonthlyLeaderboard(
   endDate: string,
   limit = 25,
 ): Promise<MonthlyLeaderboardEntry[]> {
-  if (usePostgres()) {
+  if (hasPostgresDatabase()) {
     const rows = await getPgDb()
       .select({
         userId: pgSchema.games.userId,

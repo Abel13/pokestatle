@@ -4,7 +4,7 @@ import {
   getSqliteDb,
   pgSchema,
   schema,
-  usePostgres,
+  hasPostgresDatabase,
 } from "@/lib/db";
 import { pickScalePairs } from "@/lib/game/scale-daily";
 import { scoreScaleGuess } from "@/lib/game/scale-score";
@@ -50,7 +50,7 @@ function parseRounds(value: unknown): ScaleRoundResult[] {
 }
 
 export async function getScaleChallenge(date: string) {
-  if (usePostgres()) {
+  if (hasPostgresDatabase()) {
     const rows = await getPgDb()
       .select()
       .from(pgSchema.scaleChallenges)
@@ -76,7 +76,7 @@ export async function createScaleChallenge(date: string) {
   );
   const id = challengeIdFromDate(date);
 
-  if (usePostgres()) {
+  if (hasPostgresDatabase()) {
     const db = getPgDb();
     await db
       .insert(pgSchema.scaleChallenges)
@@ -135,13 +135,13 @@ async function toPublicRound(
     reference: {
       id: reference.id,
       name: reference.name,
-      sprite: resolveSpriteUrl(reference.id, reference.sprite),
+      sprite: resolveSpriteUrl(reference.id),
       heightDm: reference.height,
     },
     target: {
       id: target.id,
       name: target.name,
-      sprite: resolveSpriteUrl(target.id, target.sprite),
+      sprite: resolveSpriteUrl(target.id),
     },
   };
 
@@ -181,7 +181,7 @@ export async function getScaleGameProgress(
   userId: string,
   challengeId: number,
 ): Promise<ScaleGameState | null> {
-  if (usePostgres()) {
+  if (hasPostgresDatabase()) {
     const rows = await getPgDb()
       .select()
       .from(pgSchema.scaleGames)
@@ -256,7 +256,7 @@ export async function persistScaleRound(input: {
     avatarUrl: input.avatarUrl,
   });
 
-  if (usePostgres()) {
+  if (hasPostgresDatabase()) {
     const db = getPgDb();
     const existing = await db
       .select()
@@ -460,7 +460,7 @@ function asIso(value: Date | string | null | undefined): string | null {
 }
 
 export async function listUserScaleGames(userId: string) {
-  if (usePostgres()) {
+  if (hasPostgresDatabase()) {
     const rows = await getPgDb()
       .select({
         challengeId: pgSchema.scaleGames.challengeId,
@@ -546,7 +546,7 @@ export async function getUserScaleStats(userId: string) {
   const today = getChallengeDate();
   if (dates.has(today)) {
     currentStreak = 1;
-    let cursor = new Date(`${today}T00:00:00Z`);
+    const cursor = new Date(`${today}T00:00:00Z`);
     for (;;) {
       cursor.setUTCDate(cursor.getUTCDate() - 1);
       const key = cursor.toISOString().slice(0, 10);
@@ -578,7 +578,7 @@ export async function getScaleTodayLeaderboard(
   challengeId: number,
   limit = 25,
 ) {
-  if (usePostgres()) {
+  if (hasPostgresDatabase()) {
     const rows = await getPgDb()
       .select({
         userId: pgSchema.scaleGames.userId,
@@ -650,7 +650,7 @@ export async function getScaleMonthlyLeaderboard(
   limit = 25,
 ) {
   const games = await (async () => {
-    if (usePostgres()) {
+    if (hasPostgresDatabase()) {
       return getPgDb()
         .select({
           userId: pgSchema.scaleGames.userId,

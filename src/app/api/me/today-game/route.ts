@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { usePostgres, getPgDb, getSqliteDb, pgSchema, schema } from "@/lib/db";
+import { hasPostgresDatabase, getPgDb, getSqliteDb, pgSchema, schema } from "@/lib/db";
 import { and, eq } from "drizzle-orm";
-import { getChallenge } from "@/lib/db/queries";
 import { getChallengeDate } from "@/lib/game/daily";
 
 export const runtime = "nodejs";
@@ -28,7 +27,7 @@ export async function GET(request: Request) {
     const dateParam = searchParams.get("date");
     const date = dateParam || getChallengeDate();
     
-    if (usePostgres()) {
+    if (hasPostgresDatabase()) {
       const db = getPgDb();
       
       // Query by date using join (works for both today and historical)

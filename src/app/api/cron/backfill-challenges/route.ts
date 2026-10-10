@@ -20,7 +20,7 @@ function formatDate(date: Date): string {
  * Backfill all missing challenges from EPOCH_DATE to today
  * Can be called manually or via cron
  */
-export async function GET(request: Request) {
+export async function GET() {
   try {
     // Optional: Validate with CRON_SECRET if set
     const headersList = await headers();
