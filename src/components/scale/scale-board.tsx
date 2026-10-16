@@ -422,6 +422,41 @@ export function ScaleBoard({ date: dateProp }: { date?: string | null } = {}) {
           <p className="mt-2 text-xs text-muted-foreground">Off by {offPct}%</p>
         </div>
       ) : null}
+
+      {showFinalCard && activeResult ? (
+        <dl className="pointer-events-none absolute top-3 left-3 z-20 space-y-1 rounded-lg border border-border/40 bg-background/70 px-2.5 py-2 text-[11px] leading-none shadow-sm backdrop-blur-md supports-[backdrop-filter]:bg-background/55">
+          <div className="flex items-center gap-1.5">
+            <span
+              aria-hidden="true"
+              className="size-1.5 rounded-full bg-teal-700 dark:bg-teal-300"
+            />
+            <dt className="text-muted-foreground">Reference</dt>
+            <dd className="font-semibold tabular-nums text-foreground">
+              {formatHeightMeters(displayRound.reference.heightDm)}
+            </dd>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span
+              aria-hidden="true"
+              className="size-1.5 rounded-full bg-sky-700 dark:bg-sky-300"
+            />
+            <dt className="text-muted-foreground">Guess</dt>
+            <dd className="font-semibold tabular-nums text-foreground">
+              {formatHeightMeters(activeResult.guessHeightDm)}
+            </dd>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span
+              aria-hidden="true"
+              className="size-1.5 rounded-full bg-slate-400"
+            />
+            <dt className="text-muted-foreground">Actual</dt>
+            <dd className="font-semibold tabular-nums text-foreground">
+              {formatHeightMeters(activeResult.realHeightDm)}
+            </dd>
+          </div>
+        </dl>
+      ) : null}
     </div>
   );
 
